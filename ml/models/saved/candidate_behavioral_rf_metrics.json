@@ -1,0 +1,143 @@
+{
+  "evaluation_sample_size": 55411,
+  "class_distribution": {
+    "total": 55411,
+    "fraud_count": 416,
+    "legitimate_count": 54995,
+    "fraud_prevalence": 0.007508
+  },
+  "decision_threshold": 0.9026,
+  "roc_auc": 0.8434,
+  "pr_auc": 0.443,
+  "precision": 0.8271,
+  "recall": 0.2644,
+  "f1_score": 0.4007,
+  "false_positive_rate": 0.0004,
+  "confusion_matrix": {
+    "true_negatives": 54972,
+    "false_positives": 23,
+    "false_negatives": 306,
+    "true_positives": 110
+  },
+  "recall_benchmarks": {
+    "fpr_at_80_recall": {
+      "target_recall": 0.8,
+      "achieved_recall": 0.8005,
+      "threshold": 0.1803,
+      "false_positive_rate": 0.3015
+    },
+    "fpr_at_90_recall": {
+      "target_recall": 0.9,
+      "achieved_recall": 0.9014,
+      "threshold": 0.1084,
+      "false_positive_rate": 0.608
+    },
+    "fpr_at_95_recall": {
+      "target_recall": 0.95,
+      "achieved_recall": 0.9519,
+      "threshold": 0.0706,
+      "false_positive_rate": 0.8172
+    }
+  },
+  "methodology": "chronological_3way_leak_free_natural_eval",
+  "optimal_threshold": 0.9026,
+  "validation_metrics": {
+    "evaluation_sample_size": 55411,
+    "class_distribution": {
+      "total": 55411,
+      "fraud_count": 77,
+      "legitimate_count": 55334,
+      "fraud_prevalence": 0.00139
+    },
+    "decision_threshold": 0.9026,
+    "roc_auc": 0.7182,
+    "pr_auc": 0.175,
+    "precision": 0.7143,
+    "recall": 0.2597,
+    "f1_score": 0.381,
+    "false_positive_rate": 0.0001,
+    "confusion_matrix": {
+      "true_negatives": 55326,
+      "false_positives": 8,
+      "false_negatives": 57,
+      "true_positives": 20
+    },
+    "recall_benchmarks": {
+      "fpr_at_90_recall": {
+        "target_recall": 0.9,
+        "achieved_recall": 0.9091,
+        "threshold": 0.0798,
+        "false_positive_rate": 0.7576
+      }
+    }
+  },
+  "threshold_0.5_results": {
+    "precision": 0.2267,
+    "recall": 0.5721,
+    "f1_score": 0.3247,
+    "confusion_matrix": {
+      "true_negatives": 54183,
+      "false_positives": 812,
+      "false_negatives": 178,
+      "true_positives": 238
+    }
+  },
+  "split_metadata": {
+    "total_pre_downsampling": 277053,
+    "train": {
+      "partition": "train",
+      "total_samples": 6100,
+      "fraud_count": 305,
+      "fraud_prevalence": 0.05,
+      "step_min": 1,
+      "step_max": 281
+    },
+    "train_unfiltered_size": 166231,
+    "validation": {
+      "partition": "validation",
+      "total_samples": 55411,
+      "fraud_count": 77,
+      "fraud_prevalence": 0.0013896157802602371,
+      "step_min": 281,
+      "step_max": 354
+    },
+    "test": {
+      "partition": "test",
+      "total_samples": 55411,
+      "fraud_count": 416,
+      "fraud_prevalence": 0.00750753460504232,
+      "step_min": 354,
+      "step_max": 743
+    }
+  },
+  "feature_importances": {
+    "amount_to_balance_ratio": 0.2783972018004693,
+    "hour_of_day": 0.20604263290213862,
+    "velocity_1h_volume": 0.14871081648379328,
+    "log_amount": 0.14588566450538795,
+    "receiver_zero_balance": 0.05816303780438388,
+    "is_balance_drain": 0.04261332760340457,
+    "is_night": 0.04139144072326814,
+    "is_cash_out": 0.028799506395142078,
+    "is_transfer_or_wire": 0.026930356001762475,
+    "is_weekend": 0.020438528121043357,
+    "recipient_inflow_count_prior": 0.0026274876592063783,
+    "is_high_risk_channel": 0.0,
+    "sender_tx_count_prior": 0.0,
+    "sender_volume_prior": 0.0,
+    "amount_to_prior_avg_ratio": 0.0,
+    "is_new_recipient": 0.0,
+    "velocity_1h_count": 0.0,
+    "fanout_ratio": 0.0,
+    "sender_history_count": 0.0,
+    "sender_has_sufficient_history": 0.0,
+    "sender_amount_mean_prior": 0.0,
+    "sender_amount_std_prior": 0.0,
+    "sender_amount_deviation_prior": 0.0,
+    "sender_amount_zscore_prior": 0.0,
+    "sender_amount_ratio_to_mean_prior": 0.0,
+    "sender_type_share_prior": 0.0,
+    "sender_type_unseen_prior": 0.0,
+    "recipient_inflow_volume_prior": 0.0
+  }
+}
