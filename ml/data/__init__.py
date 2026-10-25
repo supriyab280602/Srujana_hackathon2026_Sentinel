@@ -1,3 +1,15 @@
-from ml.data.loader import DataLoader, REQUIRED_COLUMNS
+from ml.data.loader import (
+    DataLoader,
+    REQUIRED_CANONICAL_COLUMNS,
+    REQUIRED_CANONICAL_COLUMNS as REQUIRED_COLUMNS,
+    PAYSIM_COLUMNS,
+    PROHIBITED_LEAKAGE_COLUMNS,
+)
 
-__all__ = ["DataLoader", "REQUIRED_COLUMNS"]
+__all__ = [
+    "DataLoader",
+    "REQUIRED_COLUMNS",
+    "REQUIRED_CANONICAL_COLUMNS",
+    "PAYSIM_COLUMNS",
+    "PROHIBITED_LEAKAGE_COLUMNS",
+]
