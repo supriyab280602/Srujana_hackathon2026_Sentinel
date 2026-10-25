@@ -1,42 +1,81 @@
 import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
 
 interface RiskTrendChartProps {
   data?: Array<{ time: string; score: number; baseline: number }>;
 }
 
 const defaultData = [
-  { time: '10:00', score: 18, baseline: 20 },
-  { time: '11:00', score: 22, baseline: 20 },
-  { time: '12:00', score: 25, baseline: 21 },
-  { time: '13:00', score: 65, baseline: 22 },
-  { time: '14:00', score: 92, baseline: 20 },
-  { time: '15:00', score: 88, baseline: 21 },
-  { time: '16:00', score: 45, baseline: 22 },
+  { time: 'Jan', score: 32, baseline: 20 },
+  { time: 'Feb', score: 48, baseline: 22 },
+  { time: 'Mar', score: 25, baseline: 21 },
+  { time: 'Apr', score: 62, baseline: 22 },
+  { time: 'May', score: 38, baseline: 24 },
+  { time: 'Jun', score: 71, baseline: 23 },
+  { time: 'Jul', score: 42, baseline: 25 },
+  { time: 'Aug', score: 55, baseline: 26 },
+  { time: 'Sep', score: 34, baseline: 24 },
+  { time: 'Oct', score: 88, baseline: 25 },
 ];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#151619] text-white px-3.5 py-2 rounded-xl shadow-xl text-center select-none border border-neutral-800">
+        <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">{label} 24, 2026</p>
+        <p className="text-sm font-bold mt-0.5 text-white">Risk: {payload[0].value} / 100</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ data = defaultData }) => {
   return (
-    <div className="w-full h-48">
+    <div className="w-full h-64 pt-2">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#EF4444" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#EF4444" stopOpacity={0.0} />
-            </linearGradient>
-            <linearGradient id="baselineGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
+            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#60A5FA" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#93C5FD" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="time" stroke="#64748B" fontSize={11} tickLine={false} />
-          <YAxis stroke="#64748B" fontSize={11} tickLine={false} domain={[0, 100]} />
-          <Tooltip
-            contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '8px', fontSize: '12px' }}
+          <CartesianGrid vertical={false} stroke="#F1F5F9" strokeDasharray="3 3" />
+          <XAxis
+            dataKey="time"
+            stroke="#94A3B8"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            dy={8}
           />
-          <Area type="monotone" dataKey="score" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#scoreGrad)" name="Risk Score" />
-          <Area type="monotone" dataKey="baseline" stroke="#3B82F6" strokeWidth={1} strokeDasharray="3 3" fillOpacity={1} fill="url(#baselineGrad)" name="Baseline Norm" />
+          <YAxis
+            stroke="#94A3B8"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            domain={[0, 100]}
+            tickFormatter={(val) => `${val}k`}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
+            type="natural"
+            dataKey="score"
+            stroke="#3B82F6"
+            strokeWidth={2.5}
+            fillOpacity={1}
+            fill="url(#blueGradient)"
+            activeDot={{ r: 5, fill: '#1E40AF', stroke: '#EFF6FF', strokeWidth: 3 }}
+          />
         </AreaChart>
       </ResponsiveContainer>
     </div>

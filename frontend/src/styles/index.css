@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-background text-slate-100 antialiased;
+    @apply bg-background text-ink antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
@@ -13,21 +13,106 @@
   }
 }
 
-/* Custom scrollbars for data tables and logs */
+/* Light scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F19;
+  background: #F1F3F7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #CBD3E0;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4B5563;
+  background: #9CA3AF;
+}
+
+/* Paper dot-grid texture — light */
+.paper-texture {
+  background-color: #F8F9FB;
+  background-image: radial-gradient(#D1D5DB 0.75px, transparent 0.75px);
+  background-size: 18px 18px;
+}
+
+/* Kept for landing page compatibility */
+.paper-texture-dark {
+  background-color: #0c0c0b;
+  background-image: radial-gradient(#262626 0.75px, transparent 0.75px);
+  background-size: 16px 16px;
+}
+
+/* Graph canvas dot-grid — light mode */
+.graph-canvas-bg {
+  background-color: #F4F6FA;
+  background-image: radial-gradient(#CBD3E0 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Replay animated edge pulse */
+@keyframes edgePulse {
+  0%, 100% { opacity: 0.4; stroke-width: 2; }
+  50%       { opacity: 1;   stroke-width: 3.5; }
+}
+
+/* Transaction marker travel animation */
+@keyframes markerTravel {
+  0%   { offset-distance: 0%;   opacity: 1; }
+  90%  { offset-distance: 100%; opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+.animate-marker-travel {
+  animation: markerTravel 1.2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  offset-rotate: auto;
+}
+
+/* Progress sweep shimmer */
+@keyframes progressSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-progress-sweep {
+  animation: progressSweep 2.5s ease-in-out infinite;
+}
+
+@keyframes shimmerFooter {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmerFooter 6s ease-in-out infinite;
+}
+
+@keyframes floatStack {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-8px) rotate(1deg); }
+}
+
+.animate-float-stack {
+  animation: floatStack 6s ease-in-out infinite;
+}
+
+/* Node highlight pulse for replay */
+@keyframes nodeHighlight {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(75,110,245,0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(75,110,245,0.15); }
+}
+
+.node-replay-active {
+  animation: nodeHighlight 1s ease-in-out infinite;
+}
+
+.node-replay-source {
+  box-shadow: 0 0 0 3px rgba(220,78,27,0.5);
+}
+
+.node-replay-dest {
+  box-shadow: 0 0 0 3px rgba(75,110,245,0.5);
 }

@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
+import { Link, useNavigate } from 'react-router-dom';
 import { RiskTrendChart } from '../../components/charts/RiskTrendChart';
 import { apiService } from '../../services/api';
 import { RiskAlert } from '../../types';
 import {
-  ShieldAlert,
-  ArrowUpRight,
+  Shield,
   TrendingUp,
-  AlertTriangle,
-  Users,
-  Clock,
+  Wallet,
+  Calendar,
+  ChevronDown,
+  Lock,
   Network,
+  FileText,
+  Sliders,
+  MoreHorizontal
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState<RiskAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,182 +29,259 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner / Heading */}
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-12">
+      {/* ── Page Title Row with Benchmark Style Pill Banner (Matches Reference) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Investigator Command Center</h2>
-          <p className="text-xs text-slate-400 mt-1">Real-time surveillance overview, suspicious flow bursts, and triage queue</p>
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+            Risk Surveillance
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            Dashboard overview of real-time fraud signals and network triage
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/app/network"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-surface-elevated hover:bg-slate-700 text-xs font-medium text-slate-200 border border-surface-border transition-colors"
-          >
-            <Network className="w-4 h-4 text-brand-400" />
-            <span>Open Graph Explorer</span>
-          </Link>
-          <Link
-            to="/app/alerts"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-xs font-medium text-white transition-colors"
-          >
-            <ShieldAlert className="w-4 h-4" />
-            <span>Triage Alerts ({alerts.length})</span>
-          </Link>
+
+        {/* Benchmark / Engine Pill Banner (Matches Reference: Benchmark style Ambitious | 25% | 75%) */}
+        <div className="bg-[#f0f5ff] border border-blue-100 rounded-2xl px-4 py-2.5 flex items-center gap-4 text-xs shadow-xs self-start md:self-auto">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0">
+            <Shield className="w-4 h-4" />
+          </div>
+          <div className="border-r border-blue-200/80 pr-4">
+            <div className="text-[10px] text-neutral-400 font-medium">Scoring Engine</div>
+            <div className="font-bold text-neutral-900">Zero-Lookahead</div>
+          </div>
+          <div className="border-r border-blue-200/80 pr-4">
+            <div className="text-[10px] text-neutral-400 font-medium">Inference Latency</div>
+            <div className="font-bold text-neutral-900">18 ms (p99)</div>
+          </div>
+          <div>
+            <div className="text-[10px] text-neutral-400 font-medium">ML Precision</div>
+            <div className="font-bold text-emerald-600">98.4%</div>
+          </div>
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            <ShieldAlert className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400">Critical / High Alerts</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-bold text-white">
-                {alerts.filter(a => a.severity === 'critical' || a.severity === 'high').length}
-              </span>
-              <span className="text-xs text-rose-400 flex items-center font-medium">
-                <TrendingUp className="w-3 h-3 mr-0.5" /> +14%
-              </span>
-            </div>
-          </div>
-        </Card>
+      {/* ── Main Two-Column Layout (Matches Reference: 38% Left / 62% Right) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ── LEFT COLUMN: Metrics & Contrast Cards (~38% = 5 cols) ── */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Card 1: Dual Metric Card (Matches Reference: £58 356 Portfolio Value / £5 326 Growth) */}
+          <div className="bg-[#f7f8fa] border border-neutral-100 rounded-3xl p-6">
+            {/* Top Metric */}
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-full bg-white shadow-xs border border-neutral-200/60 flex items-center justify-center text-neutral-700">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <button className="bg-white border border-neutral-200/80 rounded-full px-3 py-1 text-xs font-medium text-neutral-700 shadow-xs flex items-center gap-1.5 hover:bg-neutral-50 transition-colors">
+                  <span>Current</span>
+                  <ChevronDown className="w-3 h-3 text-neutral-400" />
+                </button>
+              </div>
 
-        <Card className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400">Suspicious Flow Volume</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-bold text-white">$485,200</span>
-              <span className="text-xs text-slate-400 font-mono">USD</span>
+              <div className="mt-4">
+                <div className="text-3xl font-bold text-neutral-900 tracking-tight">
+                  $485,200
+                </div>
+                <div className="text-xs text-neutral-400 font-medium mt-1">
+                  Suspicious transaction volume
+                </div>
+              </div>
             </div>
-          </div>
-        </Card>
 
-        <Card className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400">Flagged Mule Nodes</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-bold text-white">18</span>
-              <span className="text-xs text-purple-400 font-medium">In 3 clusters</span>
-            </div>
-          </div>
-        </Card>
+            {/* Divider */}
+            <div className="border-t border-neutral-200/60 my-6" />
 
-        <Card className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400">Avg Triage Speed</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-bold text-white">2.8 min</span>
-              <span className="text-xs text-emerald-400 font-medium">Target &lt; 5m</span>
+            {/* Bottom Metric */}
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-full bg-white shadow-xs border border-neutral-200/60 flex items-center justify-center text-neutral-700">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <button className="bg-white border border-neutral-200/80 rounded-full px-3 py-1 text-xs font-medium text-neutral-700 shadow-xs flex items-center gap-1.5 hover:bg-neutral-50 transition-colors">
+                  <span>All time</span>
+                  <ChevronDown className="w-3 h-3 text-neutral-400" />
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <div className="text-3xl font-bold text-neutral-900 tracking-tight">
+                  18 Flagged Mules
+                </div>
+                <div className="text-xs text-neutral-400 font-medium mt-1">
+                  Active syndicate laundering nodes
+                </div>
+              </div>
             </div>
           </div>
-        </Card>
+
+          {/* Card 2: Signature Contrast Card (Matches Reference Black Debit Card + Cream Attached Tab) */}
+          <div className="relative">
+            {/* Dark Top Section */}
+            <div className="bg-[#151619] rounded-3xl p-6 text-white relative z-10 shadow-md">
+              <div className="flex items-center justify-between">
+                {/* Mastercard-style dual ring emblem */}
+                <div className="flex items-center -space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-rose-500/80" />
+                  <div className="w-6 h-6 rounded-full bg-amber-400/80" />
+                </div>
+                <button className="text-neutral-400 hover:text-white p-1 transition-colors">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="mt-6">
+                <div className="font-mono text-2xl font-bold tracking-widest text-white">
+                  *7749
+                </div>
+                <div className="text-xs text-neutral-400 mt-1">
+                  Primary syndicate target account
+                </div>
+              </div>
+
+              {/* Action Buttons (Matches Reference 'Top up' & 'Withdraw' pills) */}
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  onClick={() => alert('Account ACC-7749 temporarily frozen for compliance review.')}
+                  className="bg-[#27282d] hover:bg-[#323339] text-white px-4 py-2 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <Lock className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>Freeze account</span>
+                </button>
+                <button
+                  onClick={() => navigate('/network?account=ACC-7749')}
+                  className="bg-[#27282d] hover:bg-[#323339] text-white px-4 py-2 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <Network className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>Trace graph</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Attached Warm-Cream Tab (Matches Reference 'Monthly regular contribution' tab) */}
+            <div className="bg-[#fdedd8] rounded-b-3xl -mt-4 pt-7 pb-4 px-6 text-[#784516] flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-medium text-[#9a6438]">
+                  Automated triage sensitivity
+                </div>
+                <div className="font-bold text-sm text-[#5c300b] mt-0.5">
+                  Threshold: 80 / 100 Index
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/settings')}
+                className="p-1 text-[#9a6438] hover:text-[#5c300b] transition-colors"
+                title="Configure thresholds"
+              >
+                <Sliders className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Card 3: Bottom Stat Card (Matches Reference 'All time fees' £80 card) */}
+          <div className="bg-[#edf3fc] border border-blue-50 rounded-2xl p-5 flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-full bg-white shadow-xs flex items-center justify-center text-blue-600">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-neutral-900">Investigation Turnaround</div>
+                <div className="text-[11px] text-neutral-400">Target &lt; 5m triage velocity</div>
+              </div>
+            </div>
+            <div className="font-bold text-lg text-neutral-900">
+              2.8 min
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN: Chart & Activity Table (~62% = 7 cols) ── */}
+        <div className="lg:col-span-7 space-y-8">
+          {/* Chart Card (Matches Reference 'Portfolio value' with Month & Date pills) */}
+          <div className="bg-white border border-neutral-100 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-neutral-900">
+                Network Risk Trend
+              </h2>
+              <div className="flex items-center gap-2">
+                <button className="bg-neutral-50 border border-neutral-200/80 rounded-full px-3 py-1 text-xs font-medium text-neutral-700 shadow-xs flex items-center gap-1.5 hover:bg-neutral-100 transition-colors">
+                  <span>Monthly</span>
+                  <ChevronDown className="w-3 h-3 text-neutral-400" />
+                </button>
+                <button className="bg-neutral-50 border border-neutral-200/80 rounded-full px-3 py-1 text-xs font-medium text-neutral-700 shadow-xs flex items-center gap-1.5 hover:bg-neutral-100 transition-colors">
+                  <Calendar className="w-3 h-3 text-neutral-400" />
+                  <span>Jan 2026 - Oct 2026</span>
+                  <ChevronDown className="w-3 h-3 text-neutral-400" />
+                </button>
+              </div>
+            </div>
+
+            {/* Natural Line/Area Chart */}
+            <RiskTrendChart />
+          </div>
+
+          {/* Activity Table Card (Matches Reference 'Portfolio activity' table) */}
+          <div className="bg-white border border-neutral-100 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-base font-bold text-neutral-900">
+                Surveillance Activity
+              </h2>
+              <button className="bg-neutral-50 border border-neutral-200/80 rounded-full px-3 py-1 text-xs font-medium text-neutral-700 shadow-xs flex items-center gap-1.5 hover:bg-neutral-100 transition-colors">
+                <span>October 2026</span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="p-8 text-center text-xs text-neutral-400">Loading surveillance feed...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-neutral-100 text-neutral-400 font-medium">
+                      <th className="pb-3 font-medium">Date</th>
+                      <th className="pb-3 font-medium">Description</th>
+                      <th className="pb-3 font-medium">Category</th>
+                      <th className="pb-3 font-medium text-right">Risk Score / Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-50">
+                    {alerts.slice(0, 5).map((alert, idx) => {
+                      const isHigh = alert.severity === 'critical' || alert.severity === 'high';
+                      return (
+                        <tr key={alert.id || idx} className="hover:bg-neutral-50/60 transition-colors group">
+                          <td className="py-3.5 text-neutral-500 font-medium whitespace-nowrap">
+                            10/{24 - idx}/2026
+                          </td>
+                          <td className="py-3.5 pr-4">
+                            <Link
+                              to={`/alerts/${alert.id}`}
+                              className="font-medium text-neutral-800 hover:text-blue-600 transition-colors line-clamp-1"
+                            >
+                              {alert.detection_rule || 'Unusual High Velocity Transaction Burst'}
+                            </Link>
+                          </td>
+                          <td className="py-3.5 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                              <span className={`w-1.5 h-1.5 rounded-full ${isHigh ? 'bg-rose-500' : 'bg-amber-400'}`} />
+                              <span className={isHigh ? 'text-rose-700' : 'text-amber-700'}>
+                                {alert.severity.toUpperCase()}
+                              </span>
+                            </span>
+                          </td>
+                          <td className="py-3.5 text-right font-bold text-neutral-900 whitespace-nowrap">
+                            ${(alert.risk_score * 1250).toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Main Charts & Activity Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Trend Area Chart */}
-        <Card
-          className="lg:col-span-2"
-          title="Aggregated Network Risk Index"
-          subtitle="Real-time scored risk spikes vs. expected historical behavioral baseline"
-        >
-          <RiskTrendChart />
-        </Card>
-
-        {/* Rapid Status summary */}
-        <Card title="Surveillance Core Status" subtitle="Active subsystem health &amp; scoring pipelines">
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-surface-border/50">
-              <span className="text-slate-300">Behavioral Engine</span>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Active (0.91 conf)
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-surface-border/50">
-              <span className="text-slate-300">Graph Multi-Hop Tracer</span>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Max 3 Hops
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-surface-border/50">
-              <span className="text-slate-300">Replay Chronology Buffer</span>
-              <span className="text-blue-400 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Ready
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-300">Human-in-the-Loop Feedback</span>
-              <span className="text-amber-400 font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> 3 Reviews Pending
-              </span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Recent Alerts Table */}
-      <Card
-        title="High-Priority Risk Alerts"
-        subtitle="Recent suspicious signals awaiting investigator adjudication"
-        action={
-          <Link to="/app/alerts" className="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1">
-            View All Alerts <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
-        }
-      >
-        {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">Loading risk alerts...</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-surface-border/80 text-slate-400 uppercase tracking-wider text-[11px]">
-                  <th className="pb-3 font-semibold">Alert ID</th>
-                  <th className="pb-3 font-semibold">Target Account</th>
-                  <th className="pb-3 font-semibold">Severity</th>
-                  <th className="pb-3 font-semibold">Risk Score</th>
-                  <th className="pb-3 font-semibold">Primary Rule</th>
-                  <th className="pb-3 font-semibold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border/40">
-                {alerts.map((alert) => (
-                  <tr key={alert.id} className="hover:bg-surface-elevated/40 transition-colors">
-                    <td className="py-3 font-mono font-medium text-slate-200">{alert.id}</td>
-                    <td className="py-3 font-mono text-slate-300">{alert.account_id}</td>
-                    <td className="py-3">
-                      <Badge variant={alert.severity}>{alert.severity.toUpperCase()}</Badge>
-                    </td>
-                    <td className="py-3 font-bold font-mono text-rose-400">{alert.risk_score}/100</td>
-                    <td className="py-3 text-slate-300">{alert.detection_rule}</td>
-                    <td className="py-3 text-right">
-                      <Link
-                        to={`/app/alerts/${alert.id}`}
-                        className="text-brand-400 hover:text-brand-300 font-semibold px-2 py-1 rounded bg-brand-500/10 hover:bg-brand-500/20 transition-colors"
-                      >
-                        Investigate
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
     </div>
   );
 };

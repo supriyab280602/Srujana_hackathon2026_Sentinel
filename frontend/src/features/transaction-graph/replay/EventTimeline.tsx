@@ -1,6 +1,6 @@
 import React from 'react';
 import { ReplayEvent } from '../types';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 
 interface EventTimelineProps {
   events: ReplayEvent[];
@@ -14,10 +14,11 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
   onSelectStep,
 }) => {
   return (
-    <div className="bg-surface p-4 rounded-xl border border-surface-border">
-      <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-3">
-        Transaction Event Stream
-      </h4>
+    <div className="bg-white border border-neutral-100 rounded-3xl p-5 shadow-sm">
+      <div className="flex items-center gap-2 pb-3 mb-3 border-b border-neutral-100">
+        <Clock className="w-4 h-4 text-neutral-400" />
+        <h4 className="font-bold text-sm text-neutral-900">Transaction Event Stream</h4>
+      </div>
       <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
         {events.map((ev) => {
           const isActive = ev.step === activeStep;
@@ -27,26 +28,28 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
             <div
               key={ev.step}
               onClick={() => onSelectStep(ev.step)}
-              className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-all flex items-center justify-between ${
+              className={`p-3 rounded-2xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
                 isActive
-                  ? 'bg-purple-950/40 border-purple-500 text-purple-200 ring-1 ring-purple-500/50'
+                  ? 'bg-blue-50 border-blue-200 text-blue-900 font-semibold shadow-xs'
                   : isPassed
-                  ? 'bg-surface-elevated/40 border-surface-border text-slate-400'
-                  : 'bg-surface/20 border-surface-border/40 text-slate-500 opacity-60'
+                  ? 'bg-neutral-50/80 border-neutral-100 text-neutral-700'
+                  : 'bg-white border-neutral-100 text-neutral-400 opacity-60 hover:opacity-100'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[11px] font-bold">#{ev.step}</span>
-                <span className="font-mono text-[11px] text-slate-300">{ev.timestamp}</span>
-                <div className="flex items-center gap-1 font-mono text-[11px] text-slate-200">
-                  <span>{ev.sourceAccount}</span>
-                  <ArrowRight className="w-3 h-3 text-slate-500" />
-                  <span>{ev.targetAccount}</span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-[10px] font-bold text-neutral-400">#{ev.step}</span>
+                <span className="text-[10px] text-neutral-400 font-medium">{ev.timestamp}</span>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="font-medium text-neutral-800">{ev.sourceAccount}</span>
+                  <ArrowRight className="w-3 h-3 text-neutral-400" />
+                  <span className="font-medium text-neutral-800">{ev.targetAccount}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono font-semibold">${ev.amount.toLocaleString()}</span>
-                {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />}
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-neutral-900">
+                  ${ev.amount.toLocaleString()}
+                </span>
+                {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
               </div>
             </div>
           );

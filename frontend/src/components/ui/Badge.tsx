@@ -9,24 +9,24 @@ interface BadgeProps {
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', className = '' }) => {
   const styles: Record<string, string> = {
-    default: 'bg-surface-elevated text-slate-300 border-surface-border',
-    outline: 'border-slate-600 text-slate-400 bg-transparent',
-    info: 'bg-blue-950/70 text-blue-400 border-blue-800/60',
-    low: 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60',
-    medium: 'bg-amber-950/70 text-amber-400 border-amber-800/60',
-    high: 'bg-orange-950/70 text-orange-400 border-orange-800/60',
-    critical: 'bg-rose-950/70 text-rose-400 border-rose-800/60',
-    open: 'bg-rose-950/60 text-rose-300 border-rose-800/50',
-    under_review: 'bg-amber-950/60 text-amber-300 border-amber-800/50',
-    escalated: 'bg-purple-950/60 text-purple-300 border-purple-800/50',
-    dismissed: 'bg-slate-800 text-slate-400 border-slate-700',
-    resolved: 'bg-emerald-950/60 text-emerald-300 border-emerald-800/50',
+    default:      'bg-gray-100 text-gray-600 border-gray-200',
+    outline:      'border-gray-300 text-gray-500 bg-transparent',
+    info:         'bg-brand-50 text-brand-600 border-brand-200',
+    low:          'bg-emerald-50 text-emerald-700 border-emerald-200',
+    medium:       'bg-amber-50 text-amber-700 border-amber-200',
+    high:         'bg-orange-50 text-orange-700 border-orange-200',
+    critical:     'bg-red-50 text-red-700 border-red-200 font-semibold',
+    open:         'bg-red-50 text-red-700 border-red-200',
+    under_review: 'bg-brand-50 text-brand-600 border-brand-200',
+    escalated:    'bg-purple-50 text-purple-700 border-purple-200',
+    dismissed:    'bg-gray-100 text-gray-500 border-gray-200',
+    resolved:     'bg-emerald-50 text-emerald-700 border-emerald-200',
   };
 
   const selectedStyle = styles[variant] || styles.default;
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${selectedStyle} ${className}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-mono text-[10px] uppercase tracking-wider border ${selectedStyle} ${className}`}>
       {children}
     </span>
   );

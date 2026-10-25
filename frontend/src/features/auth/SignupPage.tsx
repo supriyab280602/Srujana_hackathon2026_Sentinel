@@ -1,77 +1,120 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
+import { ArrowRight, Zap, Building, Mail, User, ChevronDown } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/app');
+    setLoading(true);
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-surface border border-surface-border rounded-2xl p-8 shadow-xl">
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-3">
-            <UserPlus className="w-6 h-6" />
-          </div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Register Investigator</h2>
-          <p className="text-xs text-slate-400 mt-1">Enroll in Sentinel AML &amp; Fraud Surveillance Desk</p>
-        </div>
-
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs mb-6">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold">Registration Scaffold:</span> Investigator role verification is currently local. Identity provider connection to be linked in subsequent sprint.
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
-            <input
-              type="text"
-              placeholder="e.g. Alex Mercer"
-              className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Investigator Work Email</label>
-            <input
-              type="email"
-              placeholder="alex.mercer@bankcompliance.com"
-              className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Assigned Department</label>
-            <select className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
-              <option>Tier-2 Financial Crimes Unit</option>
-              <option>Cross-Border Mule Investigation</option>
-              <option>High-Risk Merchant Underwriting</option>
-            </select>
-          </div>
-
-          <Button type="submit" className="w-full mt-2" variant="primary">
-            <span>Register &amp; Launch Console</span>
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </form>
-
-        <div className="mt-6 pt-5 border-t border-surface-border/60 text-center text-xs text-slate-400">
-          Already registered?{' '}
-          <Link to="/login" className="text-brand-400 hover:text-brand-300 font-medium">
-            Sign in
+    <div className="min-h-screen bg-[#fafbfe] flex flex-col items-center justify-center p-6 relative">
+      <div className="relative z-10 w-full max-w-md">
+        {/* Logo */}
+        <div className="flex flex-col items-center text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2.5 mb-4 group">
+            <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white font-bold text-sm shadow-xs">
+              S
+            </div>
+            <div className="font-bold text-xl tracking-widest text-neutral-900">
+              SENTINEL
+            </div>
           </Link>
-          <div className="mt-3">
-            <Link to="/" className="text-slate-500 hover:text-slate-300">
+
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">Request Investigator Access</h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            Enroll in the Sentinel AML &amp; Fraud Surveillance Desk
+          </p>
+        </div>
+
+        <div className="bg-white border border-neutral-100 rounded-3xl p-8 shadow-sm">
+          {/* Dev Notice */}
+          <div className="flex items-start gap-2.5 p-4 rounded-2xl bg-[#f0f5ff] border border-blue-100 text-blue-900 text-xs mb-6">
+            <Zap className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
+            <div>
+              <span className="font-bold">DEV ENVIRONMENT ACTIVE:</span>{' '}
+              Registration scaffolded. Submitting grants immediate live console access.
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-medium text-neutral-600 mb-1.5">
+                <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-neutral-400" /> Full Name</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Alex Mercer"
+                className="w-full bg-[#f4f5f7] border-0 rounded-2xl px-4 py-3 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-300 transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-600 mb-1.5">
+                <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-neutral-400" /> Investigator Work Email</span>
+              </label>
+              <input
+                type="email"
+                placeholder="alex.mercer@bankcompliance.com"
+                className="w-full bg-[#f4f5f7] border-0 rounded-2xl px-4 py-3 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-300 transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-600 mb-1.5">
+                <span className="flex items-center gap-1.5"><Building className="w-3.5 h-3.5 text-neutral-400" /> Assigned Department</span>
+              </label>
+              <div className="relative">
+                <select className="w-full appearance-none bg-[#f4f5f7] border-0 rounded-2xl px-4 py-3 text-xs text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-300 transition-all pr-10 cursor-pointer">
+                  <option>Tier-2 Financial Crimes Unit</option>
+                  <option>Cross-Border Mule Investigation</option>
+                  <option>High-Risk Merchant Underwriting</option>
+                  <option>AML Compliance &amp; Regulatory Affairs</option>
+                  <option>Executive Risk Oversight</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-xs tracking-wide shadow-xs transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Provisioning Account...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Investigator Account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-5 border-t border-neutral-100 space-y-3 text-center text-xs">
+            <div className="text-neutral-500">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-600 hover:underline font-semibold">
+                Sign In
+              </Link>
+            </div>
+            <Link to="/" className="block text-neutral-400 hover:text-neutral-800 transition-colors font-medium text-[11px]">
               ← Return to Landing Page
             </Link>
           </div>

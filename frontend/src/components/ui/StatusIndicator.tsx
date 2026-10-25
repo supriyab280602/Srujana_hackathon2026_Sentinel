@@ -7,16 +7,27 @@ interface StatusIndicatorProps {
 
 export const StatusIndicator: React.FC<StatusIndicatorProps> = ({ status, label }) => {
   const colors = {
-    online: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
-    warning: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]',
-    offline: 'bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]',
-    busy: 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]',
+    online:  'bg-emerald-500',
+    warning: 'bg-amber-400',
+    offline: 'bg-red-500',
+    busy:    'bg-brand-500 animate-pulse',
+  };
+
+  const textColors = {
+    online:  'text-emerald-700',
+    warning: 'text-amber-700',
+    offline: 'text-red-600',
+    busy:    'text-brand-600',
   };
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-1.5">
       <span className={`w-2 h-2 rounded-full ${colors[status]}`} />
-      {label && <span className="text-xs text-slate-300 font-medium">{label}</span>}
+      {label && (
+        <span className={`font-mono text-[10px] uppercase tracking-wider font-semibold ${textColors[status]}`}>
+          {label}
+        </span>
+      )}
     </div>
   );
 };

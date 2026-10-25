@@ -13,6 +13,10 @@ export interface Transaction {
   location_country?: string;
   ip_address?: string;
   device_id?: string;
+  risk_score?: number;
+  risk_severity?: RiskSeverity;
+  status?: 'cleared' | 'flagged' | 'blocked' | 'under_review';
+  flagged_rule?: string;
 }
 
 export interface RiskFactor {
@@ -78,3 +82,48 @@ export interface BehavioralFingerprint {
   anomalies_detected: number;
   confidence_score: number;
 }
+
+export interface AccountProfile {
+  id: string;
+  account_holder: string;
+  account_type: 'individual' | 'business' | 'fintech_custody' | 'mule_suspect';
+  status: 'active' | 'suspended' | 'under_investigation' | 'closed';
+  risk_tier: RiskSeverity;
+  risk_score: number;
+  balance: number;
+  currency: string;
+  created_at: string;
+  kyc_status: 'verified' | 'pending' | 'flagged' | 'exempt';
+  location: string;
+  ip_reputation: 'clean' | 'datacenter_proxy' | 'tor_exit' | 'high_risk_asn';
+  device_count: number;
+  behavioral: BehavioralFingerprint;
+  recent_transactions: Transaction[];
+}
+
+export interface InvestigationCase {
+  id: string;
+  case_title: string;
+  target_account: string;
+  opened_at: string;
+  investigator: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: 'in_progress' | 'completed' | 'escalated';
+  summary: string;
+  verdict?: string;
+  notes_history: Array<{
+    author: string;
+    timestamp: string;
+    note: string;
+    action: string;
+  }>;
+  evidence_items: Array<{
+    id: string;
+    type: 'velocity' | 'graph_loop' | 'ip_proxy' | 'device' | 'document';
+    title: string;
+    description: string;
+    confidence: number;
+  }>;
+  related_alerts: string[];
+}
+

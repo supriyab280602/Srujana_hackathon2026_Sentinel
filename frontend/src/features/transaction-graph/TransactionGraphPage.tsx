@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GraphCanvas } from './components/GraphCanvas';
 import { NodeDetailsPanel } from './components/NodeDetailsPanel';
@@ -11,7 +11,8 @@ import { GraphViewMode, ReplayEvent } from './types';
 import { apiService } from '../../services/api';
 import { AccountNetworkData } from '../../types';
 
-const INITIAL_REPLAY_EVENTS: ReplayEvent[] = [
+// Replay event sequence: chronologically ordered by timestamp (deterministic).
+const REPLAY_EVENTS: ReplayEvent[] = [
   {
     step: 1,
     timestamp: '14:05:00',
@@ -74,6 +75,10 @@ const INITIAL_REPLAY_EVENTS: ReplayEvent[] = [
   },
 ];
 
+const SPEED_OPTIONS = [0.5, 1, 1.5, 2] as const;
+type Speed = (typeof SPEED_OPTIONS)[number];
+const BASE_INTERVAL_MS = 2200;
+
 export const TransactionGraphPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const accountParam = searchParams.get('account') || 'ACC-7749';
@@ -82,9 +87,12 @@ export const TransactionGraphPage: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(accountParam);
   const [mode, setMode] = useState<GraphViewMode>('exploration');
 
-  // Replay State
+  // Replay state
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [speed, setSpeed] = useState<Speed>(1);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     apiService.getAccountNetwork(accountParam).then((data) => {
@@ -93,108 +101,151 @@ export const TransactionGraphPage: React.FC = () => {
     });
   }, [accountParam]);
 
-  // Step play ticker
-  useEffect(() => {
-    let interval: any;
-    if (isPlaying && mode === 'replay') {
-      interval = setInterval(() => {
-        setCurrentStep((prev) => {
-          if (prev >= INITIAL_REPLAY_EVENTS.length) {
-            setIsPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 1800);
+  const clearTicker = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, mode]);
+  }, []);
+
+  useEffect(() => {
+    clearTicker();
+    if (!isPlaying || mode !== 'replay') return;
+
+    intervalRef.current = setInterval(() => {
+      setCurrentStep((prev) => {
+        if (prev >= REPLAY_EVENTS.length) {
+          setIsPlaying(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, BASE_INTERVAL_MS / speed);
+
+    return clearTicker;
+  }, [isPlaying, mode, speed, clearTicker]);
+
+  const handleModeChange = useCallback((next: GraphViewMode) => {
+    if (next === 'replay') {
+      clearTicker();
+      setIsPlaying(false);
+      setCurrentStep(1);
+    }
+    setMode(next);
+  }, [clearTicker]);
+
+  const handleTogglePlay = useCallback(() => setIsPlaying((p) => !p), []);
+
+  const handleStepForward = useCallback(() => {
+    setIsPlaying(false);
+    clearTicker();
+    setCurrentStep((s) => Math.min(s + 1, REPLAY_EVENTS.length));
+  }, [clearTicker]);
+
+  const handleStepBackward = useCallback(() => {
+    setIsPlaying(false);
+    clearTicker();
+    setCurrentStep((s) => Math.max(s - 1, 1));
+  }, [clearTicker]);
+
+  const handleReset = useCallback(() => {
+    clearTicker();
+    setIsPlaying(false);
+    setCurrentStep(1);
+  }, [clearTicker]);
+
+  const handleSeek = useCallback((step: number) => {
+    setIsPlaying(false);
+    clearTicker();
+    setCurrentStep(Math.max(1, Math.min(step, REPLAY_EVENTS.length)));
+  }, [clearTicker]);
+
+  useEffect(() => () => clearTicker(), [clearTicker]);
 
   const selectedNode = networkData?.nodes.find((n) => n.id === selectedNodeId) || null;
-  const currentEvent = INITIAL_REPLAY_EVENTS.find((e) => e.step === currentStep);
+  const currentEvent = REPLAY_EVENTS.find((e) => e.step === currentStep);
+  const isReplayMode = mode === 'replay';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-12">
       {/* Title & Mode Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">
-            Transaction Relationship Graph &amp; Replay Engine
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Multi-hop financial topology, mule rings, and chronological event playback
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+            Relationship Graph &amp; Replay
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            Multi-hop financial topology, mule rings, and animated transaction playback
           </p>
         </div>
 
         <GraphControls
           mode={mode}
-          onModeChange={setMode}
+          onModeChange={handleModeChange}
           onRefresh={() => setSelectedNodeId(accountParam)}
         />
       </div>
 
-      {/* Main Graph Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: React Flow Canvas */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="h-[480px]">
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Canvas + Controls (Left/Center ~65% = 8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="h-[520px] rounded-3xl border border-neutral-100 overflow-hidden shadow-sm bg-white">
             {networkData ? (
               <GraphCanvas
                 networkData={networkData}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={setSelectedNodeId}
-                highlightedStep={mode === 'replay' ? currentStep : undefined}
+                highlightedStep={isReplayMode ? currentStep : undefined}
+                replayEvents={REPLAY_EVENTS}
+                isReplaying={isReplayMode}
               />
             ) : (
-              <div className="h-full bg-surface border border-surface-border rounded-xl flex items-center justify-center text-xs text-slate-500">
-                Loading transaction topology...
+              <div className="h-full flex items-center justify-center text-xs text-neutral-400 bg-neutral-50">
+                Loading transaction topology…
               </div>
             )}
           </div>
 
-          {/* If in Replay Mode, show Replay Controls directly under the canvas */}
-          {mode === 'replay' && (
+          {isReplayMode && (
             <ReplayControls
               currentStep={currentStep}
-              totalSteps={INITIAL_REPLAY_EVENTS.length}
+              totalSteps={REPLAY_EVENTS.length}
               isPlaying={isPlaying}
-              onTogglePlay={() => setIsPlaying(!isPlaying)}
-              onStepForward={() => setCurrentStep((s) => Math.min(s + 1, INITIAL_REPLAY_EVENTS.length))}
-              onReset={() => {
-                setIsPlaying(false);
-                setCurrentStep(1);
-              }}
-              onStepChange={(step) => setCurrentStep(step)}
+              speed={speed}
+              onTogglePlay={handleTogglePlay}
+              onStepForward={handleStepForward}
+              onStepBackward={handleStepBackward}
+              onReset={handleReset}
+              onStepChange={handleSeek}
+              onSpeedChange={setSpeed}
             />
           )}
         </div>
 
-        {/* Right 1 Col: Context Panels based on mode */}
-        <div className="space-y-4">
-          {mode === 'exploration' ? (
+        {/* Right Details Panel (~35% = 4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          {!isReplayMode ? (
             <>
               <NodeDetailsPanel node={selectedNode} />
-              <div className="p-4 bg-surface rounded-xl border border-surface-border text-xs text-slate-400 space-y-2">
-                <span className="font-semibold text-slate-200 block">Investigator Tips</span>
-                <p>
-                  • Red pulsed edges indicate transactions that trigger high-velocity threshold rules.
+              <div className="p-6 bg-[#f0f5ff] rounded-3xl border border-blue-100 text-xs text-neutral-700 space-y-2">
+                <span className="font-bold text-neutral-900 block text-sm">Investigator Guidance</span>
+                <p className="text-neutral-600 leading-relaxed">
+                  • Colored nodes identify entity classifications and mule risk tiers.
                 </p>
-                <p>
-                  • Switch to <strong className="text-purple-300">Replay Mode</strong> above to walk through the event chronology step-by-step.
+                <p className="text-neutral-600 leading-relaxed">
+                  • Click <strong>Flow Replay Mode</strong> above to step through actual chronological transaction flows.
                 </p>
               </div>
             </>
           ) : (
             <>
-              <RiskScoreHistory
-                events={INITIAL_REPLAY_EVENTS}
-                currentStep={currentStep}
-              />
+              <RiskScoreHistory events={REPLAY_EVENTS} currentStep={currentStep} />
               <CurrentEventEvidence currentEvent={currentEvent} />
               <EventTimeline
-                events={INITIAL_REPLAY_EVENTS}
+                events={REPLAY_EVENTS}
                 activeStep={currentStep}
-                onSelectStep={(s) => setCurrentStep(s)}
+                onSelectStep={handleSeek}
               />
             </>
           )}

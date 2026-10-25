@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import { apiService } from '../../services/api';
-import { RiskAlert, RiskSeverity } from '../../types';
+import { RiskAlert } from '../../types';
 import { Filter, Eye, AlertCircle } from 'lucide-react';
+
+const SEVERITY_FILTERS = ['all', 'critical', 'high', 'medium', 'low'] as const;
 
 export const AlertsQueuePage: React.FC = () => {
   const [alerts, setAlerts] = useState<RiskAlert[]>([]);
@@ -25,29 +25,32 @@ export const AlertsQueuePage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Title & Filter bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Active Alert Triage Queue</h2>
-          <p className="text-xs text-slate-400 mt-1">Review, prioritize, and initiate deep-dives on anomalous financial patterns</p>
-        </div>
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-12">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
+          Risk Alerts Queue
+        </h1>
+        <p className="text-xs text-neutral-500 mt-1">
+          Review, prioritize, and initiate deep-dives on anomalous financial patterns
+        </p>
       </div>
 
-      <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-surface-border">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-semibold text-slate-300">Filter Severity:</span>
-            <div className="flex gap-1.5">
-              {['all', 'critical', 'high', 'medium', 'low'].map((sev) => (
+      <div className="bg-white border border-neutral-100 rounded-3xl p-6 shadow-sm">
+        {/* Filters row with Pill Buttons */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-neutral-100">
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="w-4 h-4 text-neutral-400 mr-1" />
+            <span className="text-xs text-neutral-400 font-medium mr-1">Severity:</span>
+            <div className="flex flex-wrap gap-1.5">
+              {SEVERITY_FILTERS.map((sev) => (
                 <button
                   key={sev}
                   onClick={() => setFilterSeverity(sev)}
-                  className={`text-xs px-2.5 py-1 rounded-md font-medium capitalize transition-colors ${
+                  className={`text-xs font-semibold px-4 py-1.5 rounded-full capitalize transition-all ${
                     filterSeverity === sev
-                      ? 'bg-brand-600 text-white'
-                      : 'bg-surface-elevated text-slate-400 hover:text-slate-200'
+                      ? 'bg-neutral-900 text-white shadow-xs'
+                      : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-200/60'
                   }`}
                 >
                   {sev}
@@ -56,68 +59,90 @@ export const AlertsQueuePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full sm:w-64">
+          <div className="w-full sm:w-72">
             <input
               type="text"
               placeholder="Search alert ID or account..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-brand-500"
+              className="w-full bg-[#f4f5f7] border-0 rounded-full px-4 py-2 text-xs text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-300 transition-all"
             />
           </div>
         </div>
 
         {filteredAlerts.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-xs">
-            <AlertCircle className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-            No alerts found matching the current filters.
+          <div className="py-12 text-center text-neutral-400">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-xs">No alerts match the current filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-surface-border/80 text-slate-400 uppercase tracking-wider text-[11px]">
-                  <th className="pb-3 font-semibold">Alert</th>
-                  <th className="pb-3 font-semibold">Account</th>
-                  <th className="pb-3 font-semibold">Severity</th>
-                  <th className="pb-3 font-semibold">Score</th>
-                  <th className="pb-3 font-semibold">Detection Summary</th>
-                  <th className="pb-3 font-semibold">Status</th>
-                  <th className="pb-3 font-semibold text-right">Details</th>
+                <tr className="border-b border-neutral-100 text-neutral-400 font-medium">
+                  <th className="pb-3 font-medium">Alert ID</th>
+                  <th className="pb-3 font-medium">Account ID</th>
+                  <th className="pb-3 font-medium">Severity</th>
+                  <th className="pb-3 font-medium">Risk Score</th>
+                  <th className="pb-3 font-medium">Detection Summary</th>
+                  <th className="pb-3 font-medium">Status</th>
+                  <th className="pb-3 font-medium text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-border/40">
-                {filteredAlerts.map((alert) => (
-                  <tr key={alert.id} className="hover:bg-surface-elevated/40 transition-colors">
-                    <td className="py-3.5 font-mono font-medium text-slate-100">{alert.id}</td>
-                    <td className="py-3.5 font-mono text-slate-300">{alert.account_id}</td>
-                    <td className="py-3.5">
-                      <Badge variant={alert.severity as RiskSeverity}>{alert.severity.toUpperCase()}</Badge>
-                    </td>
-                    <td className="py-3.5 font-bold font-mono text-rose-400">{alert.risk_score}</td>
-                    <td className="py-3.5 max-w-md">
-                      <p className="font-medium text-slate-200 truncate">{alert.title}</p>
-                      <p className="text-[11px] text-slate-400 truncate">{alert.summary}</p>
-                    </td>
-                    <td className="py-3.5">
-                      <Badge variant={alert.status}>{alert.status.replace('_', ' ')}</Badge>
-                    </td>
-                    <td className="py-3.5 text-right">
-                      <Link
-                        to={`/app/alerts/${alert.id}`}
-                        className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 font-semibold px-2.5 py-1.5 rounded-lg bg-brand-500/10 hover:bg-brand-500/20 transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Inspect</span>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-neutral-50">
+                {filteredAlerts.map((alert) => {
+                  const isCritical = alert.severity === 'critical';
+                  const isHigh = alert.severity === 'high';
+                  return (
+                    <tr key={alert.id} className="hover:bg-neutral-50/60 transition-colors group">
+                      <td className="py-3.5 font-semibold">
+                        <Link to={`/alerts/${alert.id}`} className="text-neutral-900 hover:text-blue-600 transition-colors">
+                          {alert.id}
+                        </Link>
+                      </td>
+                      <td className="py-3.5">
+                        <Link to={`/accounts/${alert.account_id}`} className="font-medium text-neutral-600 hover:text-neutral-900">
+                          {alert.account_id}
+                        </Link>
+                      </td>
+                      <td className="py-3.5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            isCritical ? 'bg-rose-500' : isHigh ? 'bg-amber-400' : 'bg-emerald-500'
+                          }`} />
+                          <span className={isCritical ? 'text-rose-700' : isHigh ? 'text-amber-700' : 'text-emerald-700'}>
+                            {alert.severity.toUpperCase()}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="py-3.5 font-bold text-neutral-900">
+                        {alert.risk_score} / 100
+                      </td>
+                      <td className="py-3.5 text-neutral-600 max-w-xs truncate">
+                        {alert.detection_rule}
+                      </td>
+                      <td className="py-3.5">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 text-neutral-700 uppercase">
+                          {alert.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="py-3.5 text-right">
+                        <Link
+                          to={`/alerts/${alert.id}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 px-3 py-1.5 rounded-full transition-colors shadow-xs"
+                        >
+                          <Eye className="w-3 h-3 text-neutral-400" />
+                          <span>Triage</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 };
