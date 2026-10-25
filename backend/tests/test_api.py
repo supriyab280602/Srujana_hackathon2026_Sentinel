@@ -1,5 +1,6 @@
 from app.schemas.network import AccountNetworkResponse, NetworkNode, NetworkEdge
 from app.services.graph_service import graph_service
+from app.repositories.base import repo
 
 
 def test_health_check(client):
@@ -255,6 +256,87 @@ def test_investigation_review_not_found(authed_client):
     }
     response = authed_client.post("/api/investigations/ALT-DOES-NOT-EXIST/review", json=payload)
     assert response.status_code == 404
+
+
+def test_investigation_review_path_mismatch_rejected_without_mutation(authed_client):
+    """
+    Submitting a review where path investigation_id does not match payload alert_id
+    must return 400 Bad Request and NOT mutate either alert record.
+    """
+    alert_8902_before = authed_client.get("/api/alerts/ALT-8902").json()
+    alert_8899_before = authed_client.get("/api/alerts/ALT-8899").json()
+    assert alert_8902_before["status"] == "open"
+    assert alert_8899_before["status"] == "under_review"
+    reviews_count_before = len(repo._reviews)
+
+    mismatched_payload = {
+        "alert_id": "ALT-8899",
+        "decision": "confirm_fraud",
+        "notes": "Attempting to mutate ALT-8899 via ALT-8902 path",
+        "investigator_id": "INV-ATTACKER",
+    }
+    response = authed_client.post("/api/investigations/ALT-8902/review", json=mismatched_payload)
+
+    assert response.status_code == 400
+    assert "mismatch" in response.json()["detail"].lower()
+    assert "ALT-8902" in response.json()["detail"]
+    assert "ALT-8899" in response.json()["detail"]
+
+    # Verify neither alert record was mutated
+    alert_8902_after = authed_client.get("/api/alerts/ALT-8902").json()
+    alert_8899_after = authed_client.get("/api/alerts/ALT-8899").json()
+    assert alert_8902_after["status"] == "open"
+    assert alert_8899_after["status"] == "under_review"
+    assert len(repo._reviews) == reviews_count_before
+
+
+def test_investigation_review_nonexistent_path_with_valid_body_alert_rejected_without_mutation(authed_client):
+    """
+    Submitting a review where path investigation_id is nonexistent but body alert_id is valid
+    must return 400 Bad Request and NOT mutate the existing alert.
+    """
+    alert_before = authed_client.get("/api/alerts/ALT-8902").json()
+    assert alert_before["status"] == "open"
+    reviews_count_before = len(repo._reviews)
+
+    payload = {
+        "alert_id": "ALT-8902",
+        "decision": "confirm_fraud",
+        "notes": "Nonexistent path ID with valid body",
+    }
+    response = authed_client.post("/api/investigations/NON-EXISTENT-CASE/review", json=payload)
+
+    assert response.status_code == 400
+    assert "mismatch" in response.json()["detail"].lower()
+
+    alert_after = authed_client.get("/api/alerts/ALT-8902").json()
+    assert alert_after["status"] == "open"
+    assert len(repo._reviews) == reviews_count_before
+
+
+def test_investigation_review_valid_path_with_nonexistent_body_alert_rejected_without_mutation(authed_client):
+    """
+    Submitting a review where path investigation_id is valid but body alert_id is nonexistent
+    must return 400 Bad Request and NOT mutate the existing alert.
+    """
+    alert_before = authed_client.get("/api/alerts/ALT-8902").json()
+    assert alert_before["status"] == "open"
+    reviews_count_before = len(repo._reviews)
+
+    payload = {
+        "alert_id": "NON-EXISTENT-ALERT",
+        "decision": "confirm_fraud",
+        "notes": "Valid path ID with nonexistent body alert",
+    }
+    response = authed_client.post("/api/investigations/ALT-8902/review", json=payload)
+
+    assert response.status_code == 400
+    assert "mismatch" in response.json()["detail"].lower()
+
+    alert_after = authed_client.get("/api/alerts/ALT-8902").json()
+    assert alert_after["status"] == "open"
+    assert len(repo._reviews) == reviews_count_before
+
 
 
 def test_networkx_cycle_detection():

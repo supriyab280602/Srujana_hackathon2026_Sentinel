@@ -790,6 +790,53 @@ class TestInvestigationReviewAuth:
         )
         assert auth_client.get("/api/alerts/ALT-8902", headers=auth_header).json()["status"] == "under_review"
 
+    def test_review_mismatched_alert_id_returns_400(
+        self, auth_client: TestClient, auth_header: dict[str, str]
+    ) -> None:
+        """
+        Submitting a review where path investigation_id does not match body alert_id
+        must return 400 Bad Request and must NOT alter any records.
+        """
+        # REVIEW_URL is /api/investigations/ALT-8902/review
+        mismatched_payload = {
+            "alert_id": "ALT-8899",
+            "decision": "confirm_fraud",
+            "notes": "Attempting cross-alert mutation attack",
+        }
+        response = auth_client.post(
+            self.REVIEW_URL,
+            json=mismatched_payload,
+            headers=auth_header,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "mismatch" in response.json().get("detail", "").lower()
+
+        # Confirm neither record was mutated
+        alert_8902 = auth_client.get("/api/alerts/ALT-8902", headers=auth_header).json()
+        alert_8899 = auth_client.get("/api/alerts/ALT-8899", headers=auth_header).json()
+        assert alert_8902["status"] == "open"
+        assert alert_8899["status"] == "under_review"
+
+    def test_review_matching_nonexistent_id_returns_404(
+        self, auth_client: TestClient, auth_header: dict[str, str]
+    ) -> None:
+        """
+        Submitting a review where path and body match but alert does not exist
+        must return 404 Not Found.
+        """
+        payload = {
+            "alert_id": "ALT-NONEXISTENT",
+            "decision": "false_positive",
+            "notes": "Nonexistent record",
+        }
+        response = auth_client.post(
+            "/api/investigations/ALT-NONEXISTENT/review",
+            json=payload,
+            headers=auth_header,
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
 
 
 # ---------------------------------------------------------------------------
