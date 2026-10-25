@@ -1,5 +1,7 @@
+import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from app.schemas.transaction import TransactionRead, TransactionCreate
 from app.schemas.alert import AlertRead, RiskFactor
 from app.schemas.network import AccountNetworkResponse, NetworkNode, NetworkEdge
 from app.schemas.investigation import InvestigationReviewRequest, InvestigationReviewResponse
@@ -14,6 +16,28 @@ class BaseRepository:
 
     def __init__(self):
         # Initial memory store for local development
+        self._transactions: Dict[str, TransactionRead] = {
+            "TXN-99410": TransactionRead(
+                id="TXN-99410",
+                sender_account_id="ACC-7749",
+                receiver_account_id="ACC-4410",
+                amount=125000.0,
+                currency="USD",
+                channel="wire",
+                timestamp=datetime.utcnow(),
+                location_country="US",
+            ),
+            "TXN-99388": TransactionRead(
+                id="TXN-99388",
+                sender_account_id="ACC-7749",
+                receiver_account_id="ACC-5128",
+                amount=95000.0,
+                currency="USD",
+                channel="wire",
+                timestamp=datetime.utcnow(),
+                location_country="US",
+            ),
+        }
         self._alerts: Dict[str, AlertRead] = {
             "ALT-8902": AlertRead(
                 id="ALT-8902",
@@ -119,6 +143,43 @@ class BaseRepository:
         if review.alert_id in self._alerts:
             self._alerts[review.alert_id].status = "resolved" if review.decision == "false_positive" else "under_review"
         return record
+
+    def add_transaction(self, txn: TransactionCreate, txn_id: Optional[str] = None) -> TransactionRead:
+        """
+        Persists a transaction into the repository.
+        Enforces unique transaction ID constraints for durable idempotency.
+        """
+        tid = txn_id or f"TXN-{uuid.uuid4().hex[:8].upper()}"
+        if tid in self._transactions:
+            raise ValueError(f"Transaction with ID '{tid}' already exists in persistence store.")
+
+        record = TransactionRead(
+            id=tid,
+            sender_account_id=txn.sender_account_id,
+            receiver_account_id=txn.receiver_account_id,
+            amount=txn.amount,
+            currency=txn.currency,
+            channel=txn.channel,
+            timestamp=txn.timestamp,
+            location_country=txn.location_country,
+            ip_address=txn.ip_address,
+            device_id=txn.device_id,
+        )
+        self._transactions[tid] = record
+        return record
+
+    def get_transaction_by_id(self, txn_id: str) -> Optional[TransactionRead]:
+        return self._transactions.get(txn_id)
+
+    def get_account_transactions(self, account_id: str) -> List[TransactionRead]:
+        return [
+            t for t in self._transactions.values()
+            if t.sender_account_id == account_id or t.receiver_account_id == account_id
+        ]
+
+    def add_alert(self, alert: AlertRead) -> AlertRead:
+        self._alerts[alert.id] = alert
+        return alert
 
 
 # Global singleton instance

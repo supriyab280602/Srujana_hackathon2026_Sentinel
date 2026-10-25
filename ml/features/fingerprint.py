@@ -12,6 +12,10 @@ Enforces strict temporal validity:
 """
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Set, Tuple
+from collections import OrderedDict
+import os
+import json
+import threading
 import math
 import numpy as np
 import pandas as pd
@@ -46,6 +50,51 @@ class AccountProfile:
     def sample_std(self) -> float:
         """Computes sample standard deviation."""
         return math.sqrt(self.sample_variance())
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serializes account profile to JSON-compatible dictionary."""
+        return {
+            "account_id": self.account_id,
+            "tx_count": self.tx_count,
+            "total_volume": self.total_volume,
+            "amount_mean": self.amount_mean,
+            "amount_m2": self.amount_m2,
+            "min_amount": self.min_amount if np.isfinite(self.min_amount) else None,
+            "max_amount": self.max_amount if np.isfinite(self.max_amount) else None,
+            "channel_counts": dict(self.channel_counts),
+            "recipient_counts": dict(self.recipient_counts),
+            "inflow_count": self.inflow_count,
+            "inflow_volume": self.inflow_volume,
+            "last_seen_step": self.last_seen_step,
+            "last_seen_ts": self.last_seen_ts.isoformat() if self.last_seen_ts is not None else None,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AccountProfile":
+        """Deserializes account profile from dictionary."""
+        ts = data.get("last_seen_ts")
+        if ts is not None and not isinstance(ts, pd.Timestamp):
+            try:
+                ts = pd.to_datetime(ts)
+            except Exception:
+                ts = None
+        min_amt = data.get("min_amount")
+        max_amt = data.get("max_amount")
+        return cls(
+            account_id=str(data.get("account_id", "unknown")),
+            tx_count=int(data.get("tx_count", 0)),
+            total_volume=float(data.get("total_volume", 0.0)),
+            amount_mean=float(data.get("amount_mean", 0.0)),
+            amount_m2=float(data.get("amount_m2", 0.0)),
+            min_amount=float(min_amt) if min_amt is not None else float("inf"),
+            max_amount=float(max_amt) if max_amt is not None else float("-inf"),
+            channel_counts=dict(data.get("channel_counts", {})),
+            recipient_counts=dict(data.get("recipient_counts", {})),
+            inflow_count=int(data.get("inflow_count", 0)),
+            inflow_volume=float(data.get("inflow_volume", 0.0)),
+            last_seen_step=data.get("last_seen_step"),
+            last_seen_ts=ts,
+        )
 
     def update_outbound(
         self,
@@ -134,13 +183,20 @@ class BehavioralFingerprintEngine:
         # Buffer for step-batch processing (updates applied at step boundary)
         self._pending_updates: List[Tuple[str, str, float, str, Optional[int], Optional[pd.Timestamp]]] = []
         self._current_step: Optional[int] = None
+        # Concurrency and idempotency protection
+        self._lock = threading.RLock()
+        self._seen_tx_ids: OrderedDict[str, None] = OrderedDict()
+        self.MAX_SEEN_TX_IDS: int = 100_000
 
     def get_or_create_profile(self, account_id: str) -> AccountProfile:
         """Retrieves existing profile or initializes empty cold-start profile."""
-        aid = str(account_id or "unknown")
-        if aid not in self.profiles:
-            self.profiles[aid] = AccountProfile(account_id=aid)
-        return self.profiles[aid]
+        clean_aid = str(account_id or "unknown").strip()
+        if clean_aid in ("None", ""):
+            clean_aid = "unknown"
+        with self._lock:
+            if clean_aid not in self.profiles:
+                self.profiles[clean_aid] = AccountProfile(account_id=clean_aid)
+            return self.profiles[clean_aid]
 
     def compute_transaction_features(
         self,
@@ -153,20 +209,28 @@ class BehavioralFingerprintEngine:
         Does NOT update the profile.
         """
         context = historical_context or {}
-        sender_id = str(transaction.get("sender_account_id", transaction.get("nameOrig", "unknown")))
-        receiver_id = str(transaction.get("receiver_account_id", transaction.get("nameDest", "unknown")))
-        channel = str(transaction.get("channel", transaction.get("type", "unknown"))).lower()
+        raw_sender = transaction.get("sender_account_id") or transaction.get("nameOrig")
+        sender_id = str(raw_sender).strip() if raw_sender is not None else "unknown"
+        if sender_id in ("None", ""):
+            sender_id = "unknown"
 
-        raw_amount = transaction.get("amount", 0.0)
+        raw_receiver = transaction.get("receiver_account_id") or transaction.get("nameDest")
+        receiver_id = str(raw_receiver).strip() if raw_receiver is not None else "unknown"
+        if receiver_id in ("None", ""):
+            receiver_id = "unknown"
+
+        channel = str(transaction.get("channel") or transaction.get("type") or "unknown").lower()
+
+        raw_amount = transaction.get("amount")
         try:
-            amount = float(raw_amount)
+            amount = float(raw_amount) if raw_amount is not None else 0.0
             if not np.isfinite(amount) or amount < 0.0:
                 amount = 0.0
         except (ValueError, TypeError):
             amount = 0.0
 
-        sender_profile = self.profiles.get(sender_id)
-        receiver_profile = self.profiles.get(receiver_id)
+        sender_profile = self.profiles.get(sender_id) if sender_id != "unknown" else None
+        receiver_profile = self.profiles.get(receiver_id) if receiver_id != "unknown" else None
 
         # 1. Sender Outbound History & Cold Start
         if sender_profile is None or sender_profile.tx_count == 0:
@@ -253,23 +317,54 @@ class BehavioralFingerprintEngine:
         transaction: Dict[str, Any],
         step: Optional[int] = None,
         timestamp: Optional[pd.Timestamp] = None,
-    ) -> None:
+        transaction_id: Optional[str] = None,
+    ) -> bool:
         """
         Immediately updates sender outbound and recipient inbound profiles for a single transaction.
-        Use this for sequential online inference or when exact microsecond ordering is available.
+        Enforces idempotency: if transaction_id has already been processed, the update is skipped.
+        Thread-safe via internal re-entrant lock.
+        Returns True if profile was updated, False if duplicate transaction ID was skipped.
         """
-        sender_id = str(transaction.get("sender_account_id", transaction.get("nameOrig", "unknown")))
-        receiver_id = str(transaction.get("receiver_account_id", transaction.get("nameDest", "unknown")))
-        channel = str(transaction.get("channel", transaction.get("type", "unknown"))).lower()
-        amount = float(transaction.get("amount", 0.0))
+        tx_id = str(
+            transaction_id
+            or transaction.get("id")
+            or transaction.get("transaction_id")
+            or ""
+        ).strip()
 
-        if sender_id and sender_id != "unknown":
-            sender_prof = self.get_or_create_profile(sender_id)
-            sender_prof.update_outbound(amount, channel, receiver_id, step=step, timestamp=timestamp)
+        with self._lock:
+            if tx_id:
+                if tx_id in self._seen_tx_ids:
+                    return False
+                self._seen_tx_ids[tx_id] = None
+                if len(self._seen_tx_ids) > self.MAX_SEEN_TX_IDS:
+                    self._seen_tx_ids.popitem(last=False)
 
-        if receiver_id and receiver_id != "unknown":
-            receiver_prof = self.get_or_create_profile(receiver_id)
-            receiver_prof.update_inbound(amount, step=step, timestamp=timestamp)
+            raw_sender = transaction.get("sender_account_id") or transaction.get("nameOrig")
+            sender_id = str(raw_sender).strip() if raw_sender is not None else "unknown"
+
+            raw_receiver = transaction.get("receiver_account_id") or transaction.get("nameDest")
+            receiver_id = str(raw_receiver).strip() if raw_receiver is not None else "unknown"
+
+            channel = str(transaction.get("channel") or transaction.get("type") or "unknown").lower()
+
+            raw_amount = transaction.get("amount")
+            try:
+                amount = float(raw_amount) if raw_amount is not None else 0.0
+                if not np.isfinite(amount) or amount < 0.0:
+                    amount = 0.0
+            except (ValueError, TypeError):
+                amount = 0.0
+
+            if sender_id and sender_id not in ("unknown", "None", ""):
+                sender_prof = self.get_or_create_profile(sender_id)
+                sender_prof.update_outbound(amount, channel, receiver_id, step=step, timestamp=timestamp)
+
+            if receiver_id and receiver_id not in ("unknown", "None", ""):
+                receiver_prof = self.get_or_create_profile(receiver_id)
+                receiver_prof.update_inbound(amount, step=step, timestamp=timestamp)
+
+            return True
 
     def process_step_batch(
         self,
@@ -371,9 +466,17 @@ class BehavioralFingerprintEngine:
         feats = features or self.compute_transaction_features(transaction)
         indicators: List[Dict[str, Any]] = []
 
-        amount = float(transaction.get("amount", 0.0))
-        channel = str(transaction.get("channel", transaction.get("type", "unknown"))).upper()
-        receiver = str(transaction.get("receiver_account_id", transaction.get("nameDest", "unknown")))
+        raw_amount = transaction.get("amount")
+        try:
+            amount = float(raw_amount) if raw_amount is not None else 0.0
+            if not np.isfinite(amount) or amount < 0.0:
+                amount = 0.0
+        except (ValueError, TypeError):
+            amount = 0.0
+
+        channel = str(transaction.get("channel") or transaction.get("type") or "unknown").upper()
+        raw_rec = transaction.get("receiver_account_id") or transaction.get("nameDest")
+        receiver = str(raw_rec).strip() if raw_rec is not None else "unknown"
 
         has_sufficient = bool(feats.get("sender_has_sufficient_history", 0.0) == 1.0)
         history_count = int(feats.get("sender_history_count", 0))
@@ -451,11 +554,68 @@ class BehavioralFingerprintEngine:
 
         return indicators
 
+    def export_profiles(self) -> Dict[str, Any]:
+        """Exports current behavioral profiles and metadata for serialization/persistence."""
+        with self._lock:
+            return {
+                "version": "1.0",
+                "exported_at": pd.Timestamp.now(tz="UTC").isoformat(),
+                "min_history_threshold": self.min_history_threshold,
+                "profiles": {aid: prof.to_dict() for aid, prof in self.profiles.items()},
+                "seen_tx_ids": list(self._seen_tx_ids.keys()),
+                "seen_tx_count": len(self._seen_tx_ids),
+            }
+
+    def import_profiles(self, data: Dict[str, Any], merge: bool = False) -> int:
+        """
+        Loads behavioral profiles from a serialized dictionary.
+        If merge is False (default), existing profiles and deduplication cache are replaced.
+        """
+        with self._lock:
+            if not merge:
+                self.profiles.clear()
+                self._seen_tx_ids.clear()
+            profiles_dict = data.get("profiles", {})
+            loaded = 0
+            for aid, p_dict in profiles_dict.items():
+                self.profiles[aid] = AccountProfile.from_dict(p_dict)
+                loaded += 1
+
+            for sid in data.get("seen_tx_ids", []):
+                self._seen_tx_ids[str(sid)] = None
+                if len(self._seen_tx_ids) > self.MAX_SEEN_TX_IDS:
+                    self._seen_tx_ids.popitem(last=False)
+
+            return loaded
+
+    def save_profiles(self, filepath: str) -> None:
+        """Atomically persists behavioral profiles to a JSON file."""
+        filepath = os.path.abspath(filepath)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        data = self.export_profiles()
+        tmp_path = f"{filepath}.tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        if os.path.exists(filepath):
+            os.replace(tmp_path, filepath)
+        else:
+            os.rename(tmp_path, filepath)
+
+    def load_profiles(self, filepath: str, merge: bool = False) -> int:
+        """Loads behavioral profiles from a persisted JSON snapshot file."""
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Behavioral profile file not found at {filepath}")
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return self.import_profiles(data, merge=merge)
+
     def reset(self) -> None:
-        """Clears all stored account profiles and pending updates."""
-        self.profiles.clear()
-        self._pending_updates.clear()
-        self._current_step = None
+        """Clears all stored account profiles, pending updates, and deduplication cache."""
+        with self._lock:
+            self.profiles.clear()
+            self._pending_updates.clear()
+            self._seen_tx_ids.clear()
+            self._current_step = None
 
 
 __all__ = ["BehavioralFingerprintEngine", "AccountProfile"]

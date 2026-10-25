@@ -958,5 +958,96 @@ def test_candidate_model_artifact_save_load_and_score(synthetic_labeled_dataset,
     assert res["is_placeholder"] is False
     assert 0.0 <= res["risk_score"] <= 100.0
 
+# =====================================================================
+# Phase 2 -- Threshold Sweep and FN Analysis Regression Tests
+# =====================================================================
 
+def test_phase2_evaluator_extreme_imbalance():
+    """
+    Regression: ModelEvaluator.evaluate_predictions handles extreme class
+    imbalance (0.14% fraud prevalence, matching the validation split) without
+    producing NaN, ZeroDivisionError, or out-of-range outputs.
+    Tests actual Sentinel code paths at realistic prevalence, not model outputs.
+    """
+    rng = np.random.default_rng(99)
+    n_total, n_fraud = 10000, 14  # 0.14% prevalence matches validation split
+    y_true = np.zeros(n_total, dtype=int)
+    y_true[:n_fraud] = 1
+    scores = rng.uniform(0.0, 0.4, n_total)
+    scores[:n_fraud] = rng.uniform(0.6, 1.0, n_fraud)
+
+    metrics = ModelEvaluator.evaluate_predictions(
+        y_true, scores, threshold=0.9, target_recall_benchmarks=[0.80, 0.90]
+    )
+
+    for key in ("roc_auc", "pr_auc", "precision", "recall", "f1_score"):
+        val = metrics[key]
+        assert val == val, f"{key} is NaN"
+        assert 0.0 <= val <= 1.0, f"{key}={val} out of [0,1]"
+    assert metrics["false_positive_rate"] >= 0.0
+    assert "recall_benchmarks" in metrics
+    for bm_key in ("fpr_at_80_recall", "fpr_at_90_recall"):
+        assert bm_key in metrics["recall_benchmarks"]
+        bm = metrics["recall_benchmarks"][bm_key]
+        assert 0.0 <= bm["false_positive_rate"] <= 1.0
+        assert 0.0 <= bm["achieved_recall"] <= 1.0
+
+
+def test_phase2_saved_metrics_schema_valid():
+    """
+    Regression: Saved model metrics JSON files have the required schema fields.
+    Tests that artifacts are structurally complete for downstream consumers.
+    Does NOT assert specific metric values, since those change with retraining.
+    """
+    import json as _json
+    metrics_dir = os.path.abspath("ml/models/saved")
+    required_keys = {"roc_auc", "pr_auc", "precision", "recall", "f1_score",
+                     "false_positive_rate", "confusion_matrix", "decision_threshold",
+                     "methodology", "class_distribution"}
+
+    for fname in ("candidate_behavioral_rf_metrics.json", "baseline_rf_metrics.json"):
+        fpath = os.path.join(metrics_dir, fname)
+        if not os.path.exists(fpath):
+            pytest.skip(f"Metrics file not found: {fname}")
+        with open(fpath) as f:
+            m = _json.load(f)
+        missing = required_keys - set(m.keys())
+        assert not missing, f"{fname} missing keys: {missing}"
+        for key in ("roc_auc", "pr_auc", "precision", "recall", "f1_score"):
+            assert isinstance(m[key], (int, float)), f"{fname} {key} not numeric"
+            assert 0.0 <= m[key] <= 1.0, f"{fname} {key}={m[key]} out of range"
+        cm = m["confusion_matrix"]
+        for cm_key in ("true_negatives", "false_positives", "false_negatives", "true_positives"):
+            assert cm_key in cm, f"{fname} confusion_matrix missing {cm_key}"
+            assert cm[cm_key] >= 0
+        assert m["methodology"], f"{fname} methodology is empty"
+
+
+def test_phase2_behavioral_features_populated_in_transform_chronological():
+    """
+    Focused Regression: FeatureEngineer.transform_chronological populates
+    candidate behavioral features with actual historical profile data
+    rather than discarding them as empty or retaining constant cold-start defaults.
+    """
+    fe = FeatureEngineer(include_behavioral=True)
+    df = pd.DataFrame([
+        {"amount": 100.0, "type": "TRANSFER", "nameOrig": "C100", "nameDest": "C200", "step": 1},
+        {"amount": 250.0, "type": "TRANSFER", "nameOrig": "C100", "nameDest": "C300", "step": 2},
+        {"amount": 500.0, "type": "CASH_OUT", "nameOrig": "C999", "nameDest": "C200", "step": 3},
+    ])
+
+    features_df = fe.transform_chronological(df)
+
+    # 1. Check all 28 candidate features are present
+    for feat in FeatureEngineer.ALL_CANDIDATE_FEATURE_NAMES:
+        assert feat in features_df.columns, f"Missing feature {feat}"
+
+    # 2. Sender history updates on repeat transaction (row 1 is C100 second tx)
+    assert features_df.loc[0, "sender_history_count"] == 0.0
+    assert features_df.loc[1, "sender_history_count"] == 1.0
+    assert features_df.loc[1, "sender_amount_mean_prior"] == 100.0
+
+    # 3. Recipient inflow volume updates on repeat recipient (C200 at row 0 and row 2)
+    assert features_df.loc[0, "recipient_inflow_volume_prior"] == 0.0
+    assert features_df.loc[2, "recipient_inflow_volume_prior"] == 100.0
 
