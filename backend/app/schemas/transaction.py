@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class TransactionBase(BaseModel):
+    id: Optional[str] = Field(None, description="Unique or client-provided transaction identifier")
     sender_account_id: str = Field(..., description="Source account identifier")
     receiver_account_id: str = Field(..., description="Destination account identifier")
     amount: float = Field(..., gt=0, description="Monetary transaction amount")

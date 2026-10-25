@@ -9,6 +9,16 @@ import numpy as np
 import pandas as pd
 
 
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    if val is None:
+        return default
+    try:
+        f = float(val)
+        return f if np.isfinite(f) else default
+    except (ValueError, TypeError):
+        return default
+
+
 class FeatureEngineer:
     """
     Transforms raw transaction streams into ML feature vectors.
@@ -72,32 +82,32 @@ class FeatureEngineer:
         context = historical_context or {}
 
         # 1. Amount features
-        amount = float(transaction_data.get("amount", 0.0))
+        amount = _safe_float(transaction_data.get("amount"), 0.0)
         log_amount = float(np.log1p(max(amount, 0.0)))
 
         # 2. Channel encoding
-        channel = str(transaction_data.get("channel", "wire")).lower()
+        channel = str(transaction_data.get("channel", "wire") or "wire").lower()
         is_transfer_or_wire = 1.0 if channel in ("transfer", "wire") else 0.0
         is_cash_out = 1.0 if channel in ("cash_out", "crypto") else 0.0
         is_high_risk_channel = 1.0 if channel in ("transfer", "cash_out", "wire", "crypto") else 0.0
 
         # 3. Temporal features
-        hour = float(context.get("hour_of_day", 12.0))
+        hour = _safe_float(context.get("hour_of_day"), 12.0)
         if "timestamp" in transaction_data and transaction_data["timestamp"]:
             try:
                 ts = pd.to_datetime(transaction_data["timestamp"])
                 hour = float(ts.hour)
                 is_weekend = 1.0 if ts.dayofweek in (5, 6) else 0.0
             except Exception:
-                is_weekend = float(context.get("is_weekend", 0.0))
+                is_weekend = _safe_float(context.get("is_weekend"), 0.0)
         else:
-            is_weekend = float(context.get("is_weekend", 0.0))
+            is_weekend = _safe_float(context.get("is_weekend"), 0.0)
 
         is_night = 1.0 if hour < 6.0 or hour >= 23.0 else 0.0
 
         # 4. Sender & Recipient Historical Context
-        sender_tx_count_prior = float(context.get("sender_tx_count_prior", 0.0))
-        sender_volume_prior = float(context.get("sender_volume_prior", 0.0))
+        sender_tx_count_prior = _safe_float(context.get("sender_tx_count_prior"), 0.0)
+        sender_volume_prior = _safe_float(context.get("sender_volume_prior"), 0.0)
 
         if sender_tx_count_prior > 0 and sender_volume_prior > 0:
             avg_prior = sender_volume_prior / sender_tx_count_prior
@@ -105,23 +115,27 @@ class FeatureEngineer:
         else:
             amount_to_prior_avg_ratio = 1.0
 
-        recipient_inflow_count_prior = float(context.get("recipient_inflow_count_prior", 0.0))
-        is_new_recipient = float(context.get("is_new_recipient", 1.0))
+        recipient_inflow_count_prior = _safe_float(context.get("recipient_inflow_count_prior"), 0.0)
+        is_new_recipient = _safe_float(context.get("is_new_recipient"), 1.0)
 
         # 5. Short-window velocity
-        velocity_count = float(context.get("velocity_1h_count", 1.0))
-        velocity_volume = float(context.get("velocity_1h_volume", amount))
-        unique_destinations = float(context.get("unique_destinations_1h", 1.0))
+        velocity_count = _safe_float(context.get("velocity_1h_count"), 1.0)
+        velocity_volume = _safe_float(context.get("velocity_1h_volume"), amount)
+        unique_destinations = _safe_float(context.get("unique_destinations_1h"), 1.0)
         fanout_ratio = float(unique_destinations / max(velocity_count, 1.0))
 
         # 6. Balance-delta features (pre-transaction only — NOT leakage)
-        sender_balance = float(transaction_data.get("sender_balance_before",
-                              context.get("sender_balance_before", 0.0)))
+        sender_bal_val = transaction_data.get("sender_balance_before")
+        if sender_bal_val is None:
+            sender_bal_val = context.get("sender_balance_before", 0.0)
+        sender_balance = _safe_float(sender_bal_val, 0.0)
         amount_to_balance_ratio = float(amount / (sender_balance + 1.0))
         is_balance_drain = 1.0 if sender_balance > 0 and amount >= sender_balance * 0.9 else 0.0
 
-        receiver_balance = float(transaction_data.get("receiver_balance_before",
-                                context.get("receiver_balance_before", 0.0)))
+        recv_bal_val = transaction_data.get("receiver_balance_before")
+        if recv_bal_val is None:
+            recv_bal_val = context.get("receiver_balance_before", 0.0)
+        receiver_balance = _safe_float(recv_bal_val, 0.0)
         receiver_zero_balance = 1.0 if receiver_balance == 0.0 else 0.0
 
         base_dict = {
@@ -244,6 +258,7 @@ class FeatureEngineer:
                     "receiver_balance_before": receiver_balance,
                 },
                 historical_context=context,
+                include_behavioral=False,
             )
             feature_rows.append(single_features)
 
@@ -263,8 +278,11 @@ class FeatureEngineer:
             from ml.features.fingerprint import BehavioralFingerprintEngine
             engine = BehavioralFingerprintEngine()
             bf_df = engine.transform_chronological(df, use_step_batching=True)
-            new_cols = [c for c in bf_df.columns if c not in features_df.columns]
-            features_df = pd.concat([features_df, bf_df[new_cols]], axis=1)
+            for col in self.CANDIDATE_BEHAVIORAL_FEATURE_NAMES:
+                if col in bf_df.columns:
+                    features_df[col] = bf_df[col].values
+                else:
+                    features_df[col] = 0.0
 
         return features_df
 

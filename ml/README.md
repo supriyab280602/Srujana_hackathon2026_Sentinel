@@ -146,12 +146,14 @@ python ml/train.py --stride 10 --include-behavioral --output ml/models/saved/can
 
 ---
 
-## 6. Requirements for Member 2 (Backend Integration)
+## 6. Phase 4A Behavioral Intelligence Integration
 
-To integrate behavioral profiles seamlessly into the FastAPI backend:
-1. **Persistent Account Store**: Currently, `BehavioralFingerprintEngine` holds profiles in-memory. For multi-worker production, Member 2 should persist profile snapshots (`export_profiles()` / `import_profiles()`) to Redis or PostgreSQL (`accounts` table in `docs/DATA_SCHEMA.md`).
-2. **Historical Context in `ScoreRequest`**: If upstream services maintain precomputed account baselines, pass `sender_amount_mean_prior`, `sender_amount_std_prior`, etc., in `historical_context` inside `ScoreRequest`.
-3. **Post-Score Profile Updates**: In the transaction ingest/replay pipeline, call `sentinel_scorer.update_profile(txn)` immediately after scoring completes to maintain live account baselines.
+The behavioral profiling engine is integrated into the online scoring pipeline:
+1. **Zero Within-Transaction Lookahead**: Profiles are retrieved prior to scoring. The transaction being scored does not alter its own baseline.
+2. **Idempotency & Deduplication**: `update_profile()` tracks processed `transaction_id`s in an internal LRU cache, preventing double-counting if a transaction is replayed or retried.
+3. **Thread Safety**: Profile mutations are guarded by a re-entrant lock (`threading.RLock`).
+4. **Snapshot Persistence**: Profiles can be persisted and restored via `sentinel_scorer.save_profiles(filepath)` and `sentinel_scorer.load_profiles(filepath)`.
+5. **Batch Scoring**: `score_batch()` scores all transactions against the pre-batch snapshot before flushing updates.
 
 ---
 
@@ -160,5 +162,5 @@ To integrate behavioral profiles seamlessly into the FastAPI backend:
 ```bash
 python -m pytest ml/tests backend/tests -v
 ```
-All **38 tests** validate statistical correctness, step-batching, zero-lookahead, and schema consistency.
+All **51 tests** across the pipeline validate statistical correctness, step-batching, zero-lookahead, schema consistency, idempotency, thread-safety, and API compatibility.
 
