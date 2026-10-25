@@ -1,6 +1,7 @@
 import React from 'react';
 import { ReplayEvent } from '../types';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { formatINR } from '../../../utils/formatters';
+import { ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 
 interface EventTimelineProps {
   events: ReplayEvent[];
@@ -14,11 +15,14 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
   onSelectStep,
 }) => {
   return (
-    <div className="bg-surface p-4 rounded-xl border border-surface-border">
-      <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wider mb-3">
-        Transaction Event Stream
-      </h4>
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+    <div className="bg-surface border border-surface-border rounded-xl p-4 shadow-xs">
+      <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-surface-border">
+        <Clock className="w-3.5 h-3.5 text-ink-muted" />
+        <h4 className="font-semibold text-xs text-ink uppercase tracking-wider">
+          Transaction Event Scrubber ({events.length} Hops)
+        </h4>
+      </div>
+      <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
         {events.map((ev) => {
           const isActive = ev.step === activeStep;
           const isPassed = ev.step < activeStep;
@@ -29,24 +33,26 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
               onClick={() => onSelectStep(ev.step)}
               className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-all flex items-center justify-between ${
                 isActive
-                  ? 'bg-purple-950/40 border-purple-500 text-purple-200 ring-1 ring-purple-500/50'
+                  ? 'bg-brand-50 border-brand-300 text-brand-900 font-semibold shadow-xs'
                   : isPassed
-                  ? 'bg-surface-elevated/40 border-surface-border text-slate-400'
-                  : 'bg-surface/20 border-surface-border/40 text-slate-500 opacity-60'
+                  ? 'bg-surface-elevated/70 border-surface-border text-ink-secondary'
+                  : 'bg-surface border-surface-border text-ink-muted opacity-50 hover:opacity-100'
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[11px] font-bold">#{ev.step}</span>
-                <span className="font-mono text-[11px] text-slate-300">{ev.timestamp}</span>
-                <div className="flex items-center gap-1 font-mono text-[11px] text-slate-200">
-                  <span>{ev.sourceAccount}</span>
-                  <ArrowRight className="w-3 h-3 text-slate-500" />
-                  <span>{ev.targetAccount}</span>
+                <span className="text-[10px] font-mono font-bold text-ink-muted">#{ev.step}</span>
+                <span className="text-[10px] font-mono text-ink-muted">{ev.timestamp}</span>
+                <div className="flex items-center gap-1 text-[11px] font-mono">
+                  <span className="text-ink">{ev.sourceAccount}</span>
+                  <ArrowRight className="w-3 h-3 text-ink-muted" />
+                  <span className="text-ink">{ev.targetAccount}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono font-semibold">${ev.amount.toLocaleString()}</span>
-                {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />}
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="font-bold text-ink tabular-nums">
+                  {formatINR(ev.amount)}
+                </span>
+                {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-brand-600" />}
               </div>
             </div>
           );

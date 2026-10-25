@@ -14,46 +14,41 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
   onRefresh,
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-surface-border">
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-400 font-medium">Display Mode:</span>
-        <div className="flex bg-surface-elevated p-0.5 rounded-lg border border-surface-border">
-          <button
-            onClick={() => onModeChange('exploration')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
-              mode === 'exploration'
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Interactive Graph</span>
-          </button>
-          <button
-            onClick={() => onModeChange('replay')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
-              mode === 'replay'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Play className="w-3.5 h-3.5" />
-            <span>Replay Mode</span>
-          </button>
-        </div>
+    <div className="flex flex-wrap items-center gap-3 bg-white border border-neutral-100 rounded-full p-1.5 shadow-xs">
+      <div className="flex bg-neutral-100 p-1 rounded-full gap-1">
+        <button
+          onClick={() => onModeChange('exploration')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            mode === 'exploration'
+              ? 'bg-white text-neutral-900 shadow-xs'
+              : 'text-neutral-500 hover:text-neutral-900'
+          }`}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>Interactive Topology</span>
+        </button>
+        <button
+          onClick={() => onModeChange('replay')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            mode === 'replay'
+              ? 'bg-neutral-900 text-white shadow-xs'
+              : 'text-neutral-500 hover:text-neutral-900'
+          }`}
+        >
+          <Play className="w-3.5 h-3.5" />
+          <span>Flow Replay Mode</span>
+        </button>
       </div>
 
-      <div className="flex items-center gap-2">
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="p-1.5 text-slate-400 hover:text-slate-200 bg-surface-elevated rounded-lg border border-surface-border"
-            title="Reset layout"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        )}
-      </div>
+      {onRefresh && (
+        <button
+          onClick={onRefresh}
+          className="w-8 h-8 rounded-full text-neutral-400 hover:text-neutral-900 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/60 flex items-center justify-center transition-colors mr-1"
+          title="Reset layout focus"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 };

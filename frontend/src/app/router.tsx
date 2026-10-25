@@ -9,7 +9,11 @@ import { AlertDetailsPage } from '../features/alerts/AlertDetailsPage';
 import { BehavioralPage } from '../features/behavioral/BehavioralPage';
 import { TransactionGraphPage } from '../features/transaction-graph/TransactionGraphPage';
 import { InvestigationsPage } from '../features/investigations/InvestigationsPage';
+import { InvestigationDetailPage } from '../features/investigations/InvestigationDetailPage';
 import { MonitoringPage } from '../features/monitoring/MonitoringPage';
+import { AccountProfilePage } from '../features/accounts/AccountProfilePage';
+import { TransactionExplorerPage } from '../features/transactions/TransactionExplorerPage';
+import { SettingsPage } from '../features/settings/SettingsPage';
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +28,57 @@ export const router = createBrowserRouter([
     path: '/signup',
     element: <SignupPage />,
   },
+  // Primary Root Routes wrapped in AppShell
+  {
+    element: <AppShell />,
+    children: [
+      {
+        path: '/dashboard',
+        element: <DashboardPage />,
+      },
+      {
+        path: '/alerts',
+        element: <AlertsQueuePage />,
+      },
+      {
+        path: '/alerts/:id',
+        element: <AlertDetailsPage />,
+      },
+      {
+        path: '/accounts/:accountId',
+        element: <AccountProfilePage />,
+      },
+      {
+        path: '/investigations',
+        element: <InvestigationsPage />,
+      },
+      {
+        path: '/investigations/:id',
+        element: <InvestigationDetailPage />,
+      },
+      {
+        path: '/transactions',
+        element: <TransactionExplorerPage />,
+      },
+      {
+        path: '/network',
+        element: <TransactionGraphPage />,
+      },
+      {
+        path: '/behavioral',
+        element: <BehavioralPage />,
+      },
+      {
+        path: '/monitoring',
+        element: <MonitoringPage />,
+      },
+      {
+        path: '/settings',
+        element: <SettingsPage />,
+      },
+    ],
+  },
+  // Legacy & Alias /app Routes wrapped in AppShell
   {
     path: '/app',
     element: <AppShell />,
@@ -33,12 +88,20 @@ export const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       {
+        path: 'dashboard',
+        element: <DashboardPage />,
+      },
+      {
         path: 'alerts',
         element: <AlertsQueuePage />,
       },
       {
         path: 'alerts/:id',
         element: <AlertDetailsPage />,
+      },
+      {
+        path: 'accounts/:accountId',
+        element: <AccountProfilePage />,
       },
       {
         path: 'behavioral',
@@ -53,8 +116,20 @@ export const router = createBrowserRouter([
         element: <InvestigationsPage />,
       },
       {
+        path: 'investigations/:id',
+        element: <InvestigationDetailPage />,
+      },
+      {
+        path: 'transactions',
+        element: <TransactionExplorerPage />,
+      },
+      {
         path: 'monitoring',
         element: <MonitoringPage />,
+      },
+      {
+        path: 'settings',
+        element: <SettingsPage />,
       },
     ],
   },
@@ -63,3 +138,4 @@ export const router = createBrowserRouter([
     element: <Navigate to="/" replace />,
   },
 ]);
+

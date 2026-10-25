@@ -12,13 +12,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   action,
-  icon = <AlertCircle className="w-10 h-10 text-slate-500 mb-3" />,
+  icon = <AlertCircle className="w-10 h-10 text-[#898989] mb-3" />,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center bg-surface/50 border border-dashed border-surface-border rounded-xl">
+    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-[#0c0c0b] border border-dashed border-[#2a2a2a] rounded-2xl">
       {icon}
-      <h4 className="text-base font-semibold text-slate-200">{title}</h4>
-      <p className="text-xs text-slate-400 max-w-sm mt-1 mb-4">{description}</p>
+      <h4 className="font-serif text-lg font-bold text-white tracking-tight">{title}</h4>
+      <p className="font-mono text-xs text-[#898989] max-w-sm mt-1 mb-5">{description}</p>
       {action}
     </div>
   );

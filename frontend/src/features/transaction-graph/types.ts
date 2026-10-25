@@ -1,4 +1,5 @@
 export type GraphViewMode = 'exploration' | 'replay';
+export type { GraphNode, GraphEdge } from '../../types';
 
 export interface ReplayEvent {
   step: number;
