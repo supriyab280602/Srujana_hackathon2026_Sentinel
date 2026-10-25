@@ -159,7 +159,7 @@ export const apiService = {
 
       if (amount > 100000) {
         score += 45;
-        factors.push({ name: 'Velocity Outflow Surge', weight: 0.45, contribution: 45.0, description: 'Single transfer > $100k exceeds historical tier' });
+        factors.push({ name: 'Velocity Outflow Surge', weight: 0.45, contribution: 45.0, description: 'Single transfer > ₹10,00,000 exceeds historical tier' });
       }
       if (isNight) {
         score += 24;

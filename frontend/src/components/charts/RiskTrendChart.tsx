@@ -6,32 +6,43 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid
+  CartesianGrid,
+  ReferenceLine
 } from 'recharts';
+import { formatINR } from '../../utils/formatters';
 
 interface RiskTrendChartProps {
   data?: Array<{ time: string; score: number; baseline: number }>;
 }
 
 const defaultData = [
-  { time: 'Jan', score: 32, baseline: 20 },
-  { time: 'Feb', score: 48, baseline: 22 },
-  { time: 'Mar', score: 25, baseline: 21 },
-  { time: 'Apr', score: 62, baseline: 22 },
-  { time: 'May', score: 38, baseline: 24 },
-  { time: 'Jun', score: 71, baseline: 23 },
-  { time: 'Jul', score: 42, baseline: 25 },
-  { time: 'Aug', score: 55, baseline: 26 },
-  { time: 'Sep', score: 34, baseline: 24 },
-  { time: 'Oct', score: 88, baseline: 25 },
+  { time: '00:00', score: 22, baseline: 25 },
+  { time: '03:00', score: 18, baseline: 25 },
+  { time: '06:00', score: 26, baseline: 25 },
+  { time: '09:00', score: 38, baseline: 28 },
+  { time: '12:00', score: 54, baseline: 30 },
+  { time: '14:00', score: 94, baseline: 30 }, // Peak fanout burst
+  { time: '15:00', score: 86, baseline: 30 },
+  { time: '18:00', score: 62, baseline: 28 },
+  { time: '21:00', score: 45, baseline: 25 },
+  { time: '23:59', score: 34, baseline: 25 },
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const score = payload[0].value;
+    const estExposure = score * 5000;
     return (
-      <div className="bg-[#151619] text-white px-3.5 py-2 rounded-xl shadow-xl text-center select-none border border-neutral-800">
-        <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">{label} 24, 2026</p>
-        <p className="text-sm font-bold mt-0.5 text-white">Risk: {payload[0].value} / 100</p>
+      <div className="bg-slate-900 text-white px-3 py-2 rounded-lg shadow-lg text-left select-none border border-slate-800 text-xs">
+        <div className="text-[10px] text-slate-400 font-mono">Timestamp: {label} UTC</div>
+        <div className="font-semibold text-white mt-0.5 flex items-center justify-between gap-4">
+          <span>Risk Threat Index:</span>
+          <span className="font-mono tabular-nums text-rose-400">{score} / 100</span>
+        </div>
+        <div className="text-[11px] text-slate-300 mt-0.5 flex items-center justify-between gap-4 border-t border-slate-800 pt-1">
+          <span>Est. 1h Exposure:</span>
+          <span className="font-mono tabular-nums text-emerald-400 font-semibold">{formatINR(estExposure)}</span>
+        </div>
       </div>
     );
   }
@@ -40,41 +51,42 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({ data = defaultData }) => {
   return (
-    <div className="w-full h-64 pt-2">
+    <div className="w-full h-56 pt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 8, right: 12, left: -22, bottom: 0 }}>
           <defs>
-            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#60A5FA" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="#93C5FD" stopOpacity={0.02} />
+            <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563EB" stopOpacity={0.2} />
+              <stop offset="100%" stopColor="#2563EB" stopOpacity={0.01} />
             </linearGradient>
           </defs>
-          <CartesianGrid vertical={false} stroke="#F1F5F9" strokeDasharray="3 3" />
+          <CartesianGrid vertical={false} stroke="#E2E8F0" strokeDasharray="2 2" />
           <XAxis
             dataKey="time"
             stroke="#94A3B8"
-            fontSize={11}
+            fontSize={10}
             tickLine={false}
             axisLine={false}
-            dy={8}
+            dy={6}
           />
           <YAxis
             stroke="#94A3B8"
-            fontSize={11}
+            fontSize={10}
             tickLine={false}
             axisLine={false}
             domain={[0, 100]}
-            tickFormatter={(val) => `${val}k`}
+            ticks={[0, 25, 50, 75, 100]}
           />
+          <ReferenceLine y={80} stroke="#EF4444" strokeDasharray="3 3" label={{ value: 'Critical (80)', fill: '#EF4444', fontSize: 9, position: 'insideTopRight' }} />
           <Tooltip content={<CustomTooltip />} />
           <Area
-            type="natural"
+            type="monotone"
             dataKey="score"
-            stroke="#3B82F6"
-            strokeWidth={2.5}
+            stroke="#1D4ED8"
+            strokeWidth={2}
             fillOpacity={1}
-            fill="url(#blueGradient)"
-            activeDot={{ r: 5, fill: '#1E40AF', stroke: '#EFF6FF', strokeWidth: 3 }}
+            fill="url(#riskGradient)"
+            activeDot={{ r: 4, fill: '#1D4ED8', stroke: '#FFFFFF', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -38,6 +38,28 @@ def get_account_transactions(account_id: str):
     ]
 
 
+@router.get("/{account_id}")
+def get_account_profile(account_id: str):
+    """
+    Retrieve entity identity profile, KYC tier, and behavioral fingerprint for an account.
+    """
+    return {
+        "id": account_id,
+        "account_holder": f"Entity {account_id}",
+        "account_type": "business",
+        "status": "under_investigation" if account_id == "ACC-7749" else "active",
+        "risk_tier": "critical" if account_id == "ACC-7749" else "medium",
+        "risk_score": 94 if account_id == "ACC-7749" else 42,
+        "balance": 24500.0 if account_id == "ACC-7749" else 75000.0,
+        "currency": "USD",
+        "created_at": "2025-08-14",
+        "kyc_status": "verified",
+        "location": "Wilmington, DE, USA",
+        "ip_reputation": "datacenter_proxy" if account_id == "ACC-7749" else "clean",
+        "device_count": 4 if account_id == "ACC-7749" else 2,
+    }
+
+
 @router.get("/{account_id}/network", response_model=AccountNetworkResponse)
 def get_account_network(account_id: str):
     """
@@ -45,3 +67,4 @@ def get_account_network(account_id: str):
     Integrates with NetworkX backend graph analysis.
     """
     return graph_service.get_account_network(account_id)
+

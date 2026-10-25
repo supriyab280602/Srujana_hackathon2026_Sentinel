@@ -1,5 +1,6 @@
 import React from 'react';
 import { ReplayEvent } from '../types';
+import { formatINR } from '../../../utils/formatters';
 import { ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 
 interface EventTimelineProps {
@@ -14,12 +15,14 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
   onSelectStep,
 }) => {
   return (
-    <div className="bg-white border border-neutral-100 rounded-3xl p-5 shadow-sm">
-      <div className="flex items-center gap-2 pb-3 mb-3 border-b border-neutral-100">
-        <Clock className="w-4 h-4 text-neutral-400" />
-        <h4 className="font-bold text-sm text-neutral-900">Transaction Event Stream</h4>
+    <div className="bg-surface border border-surface-border rounded-xl p-4 shadow-xs">
+      <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-surface-border">
+        <Clock className="w-3.5 h-3.5 text-ink-muted" />
+        <h4 className="font-semibold text-xs text-ink uppercase tracking-wider">
+          Transaction Event Scrubber ({events.length} Hops)
+        </h4>
       </div>
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+      <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
         {events.map((ev) => {
           const isActive = ev.step === activeStep;
           const isPassed = ev.step < activeStep;
@@ -28,28 +31,28 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
             <div
               key={ev.step}
               onClick={() => onSelectStep(ev.step)}
-              className={`p-3 rounded-2xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
+              className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-all flex items-center justify-between ${
                 isActive
-                  ? 'bg-blue-50 border-blue-200 text-blue-900 font-semibold shadow-xs'
+                  ? 'bg-brand-50 border-brand-300 text-brand-900 font-semibold shadow-xs'
                   : isPassed
-                  ? 'bg-neutral-50/80 border-neutral-100 text-neutral-700'
-                  : 'bg-white border-neutral-100 text-neutral-400 opacity-60 hover:opacity-100'
+                  ? 'bg-surface-elevated/70 border-surface-border text-ink-secondary'
+                  : 'bg-surface border-surface-border text-ink-muted opacity-50 hover:opacity-100'
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                <span className="text-[10px] font-bold text-neutral-400">#{ev.step}</span>
-                <span className="text-[10px] text-neutral-400 font-medium">{ev.timestamp}</span>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="font-medium text-neutral-800">{ev.sourceAccount}</span>
-                  <ArrowRight className="w-3 h-3 text-neutral-400" />
-                  <span className="font-medium text-neutral-800">{ev.targetAccount}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold text-ink-muted">#{ev.step}</span>
+                <span className="text-[10px] font-mono text-ink-muted">{ev.timestamp}</span>
+                <div className="flex items-center gap-1 text-[11px] font-mono">
+                  <span className="text-ink">{ev.sourceAccount}</span>
+                  <ArrowRight className="w-3 h-3 text-ink-muted" />
+                  <span className="text-ink">{ev.targetAccount}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-neutral-900">
-                  ${ev.amount.toLocaleString()}
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="font-bold text-ink tabular-nums">
+                  {formatINR(ev.amount)}
                 </span>
-                {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
+                {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-brand-600" />}
               </div>
             </div>
           );

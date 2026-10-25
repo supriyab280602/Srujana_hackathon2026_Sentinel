@@ -241,7 +241,7 @@ export const LandingPage: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-0.5 rounded bg-[#499df8] text-white font-bold text-[10px]">CRITICAL 94</span>
                     <span className="font-bold text-[#141518]">TXN-99410</span>
-                    <span className="text-[#666] hidden sm:inline">Wire $125,000 → Unseasoned Mule (ACC-4410)</span>
+                    <span className="text-[#666] hidden sm:inline">Wire ₹12,50,000 → Unseasoned Mule (ACC-4410)</span>
                   </div>
                   <span className="text-[#499df8] font-bold text-[11px]">FLAGGED LOOP</span>
                 </div>
@@ -250,7 +250,7 @@ export const LandingPage: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-0.5 rounded bg-[#54702f] text-white font-bold text-[10px]">RISK 79</span>
                     <span className="font-bold text-[#141518]">TXN-99388</span>
-                    <span className="text-[#666] hidden sm:inline">Wire $95,000 → Secondary Siphon (ACC-5128)</span>
+                    <span className="text-[#666] hidden sm:inline">RTGS ₹9,50,000 → Secondary Siphon (ACC-5128)</span>
                   </div>
                   <span className="text-[#54702f] font-bold text-[11px]">THRESHOLD BREACH</span>
                 </div>
@@ -259,7 +259,7 @@ export const LandingPage: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-0.5 rounded bg-[#7e7e7e] text-white font-bold text-[10px]">NORM 18</span>
                     <span className="font-bold text-[#888]">TXN-99044</span>
-                    <span className="text-[#999] hidden sm:inline">ACH Direct Deposit $1,500 (Payroll Clearing)</span>
+                    <span className="text-[#999] hidden sm:inline">UPI / NEFT ₹15,000 (Salary Clearing)</span>
                   </div>
                   <span className="text-[#888] font-bold text-[11px]">CLEARED</span>
                 </div>
@@ -426,7 +426,7 @@ export const LandingPage: React.FC = () => {
               >
                 <div>
                   <p className="font-serif text-2xl sm:text-3xl font-bold text-[#fafafa]">
-                    $10K - $100K
+                    ₹1 Lakh - ₹10 Lakh
                   </p>
                   <p className="font-mono text-[10px] text-white/60 uppercase mt-1">
                     20 - 50 Accounts
@@ -450,7 +450,7 @@ export const LandingPage: React.FC = () => {
               >
                 <div>
                   <p className="font-serif text-2xl sm:text-3xl font-bold text-[#fafafa]">
-                    $100K - $1M
+                    ₹10 Lakh - ₹1 Crore
                   </p>
                   <p className="font-mono text-[10px] text-teal-300 uppercase mt-1 font-bold">
                     50 - 250 Accounts (Most Common)
@@ -476,7 +476,7 @@ export const LandingPage: React.FC = () => {
               >
                 <div>
                   <p className="font-serif text-2xl sm:text-3xl font-bold text-[#fafafa]">
-                    $1,000,000+
+                    ₹1 Crore+ (High-Value)
                   </p>
                   <p className="font-mono text-[10px] text-white/60 uppercase mt-1">
                     250+ High-Velocity Accounts

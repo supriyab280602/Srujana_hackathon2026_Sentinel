@@ -6,42 +6,42 @@ export const MonitoringPage: React.FC = () => {
   const [velocityWindow, setVelocityWindow] = useState('15m');
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto pb-12">
+    <div className="space-y-5 max-w-[1440px] mx-auto pb-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
-            Adaptive Risk Monitoring
+          <h1 className="text-xl font-bold tracking-tight text-ink">
+            Adaptive Surveillance &amp; Threshold Monitoring
           </h1>
-          <p className="text-xs text-neutral-500 mt-1">
-            Dynamic threshold calibration, drift surveillance, and multi-scale sensitivity balancing
+          <p className="text-xs text-ink-secondary mt-0.5">
+            Dynamic threshold calibration, concept drift surveillance, and multi-scale sensitivity balancing
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-4 py-2 rounded-full shadow-xs self-start md:self-auto">
-          <Activity className="w-3.5 h-3.5 text-blue-600" />
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg shadow-xs self-start sm:self-auto">
+          <Activity className="w-3.5 h-3.5 text-brand-600" />
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
             Real-Time Drift Surveillance Active
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left 8 cols */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white border border-neutral-100 rounded-3xl p-6 shadow-sm space-y-6">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="bg-surface border border-surface-border rounded-xl p-5 shadow-xs space-y-4">
             <div>
-              <h2 className="text-base font-bold text-neutral-900">
+              <h2 className="text-xs font-bold text-ink uppercase tracking-wider">
                 Threshold Sensitivity Calibration
               </h2>
-              <p className="text-xs text-neutral-400 mt-0.5">Adjust real-time scoring trigger thresholds</p>
+              <p className="text-[11px] text-ink-muted mt-0.5">Adjust real-time scoring trigger thresholds across live transaction ingestion</p>
             </div>
 
-            <div className="space-y-6 pt-2">
+            <div className="space-y-4 pt-1">
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold text-neutral-700">Anomaly Detection Sensitivity</span>
-                  <span className="text-base font-bold text-blue-600">{sensitivity}%</span>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-xs font-semibold text-ink-secondary">Anomaly Trigger Threshold</span>
+                  <span className="text-sm font-mono font-bold text-brand-700">{sensitivity}%</span>
                 </div>
                 <input
                   type="range"
@@ -49,26 +49,26 @@ export const MonitoringPage: React.FC = () => {
                   max={95}
                   value={sensitivity}
                   onChange={(e) => setSensitivity(Number(e.target.value))}
-                  className="w-full accent-blue-600 cursor-pointer h-2 bg-neutral-200 rounded-lg"
+                  className="w-full accent-brand-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
                 />
-                <div className="flex justify-between text-[11px] text-neutral-400 mt-2 font-medium">
-                  <span>Conservative (Fewer alerts)</span>
-                  <span className="text-blue-600 font-semibold">Balanced (Recommended: 75%)</span>
-                  <span>Aggressive (Max catch)</span>
+                <div className="flex justify-between text-[10px] text-ink-muted mt-1 font-medium">
+                  <span>Conservative (Fewer False Positives)</span>
+                  <span className="text-brand-700 font-semibold font-mono">Standard Baseline: 75%</span>
+                  <span>Strict (Maximum Catch Rate)</span>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-neutral-100">
-                <label className="block text-xs font-semibold text-neutral-700 mb-3">Burst Velocity Time Window</label>
-                <div className="flex flex-wrap gap-2">
+              <div className="pt-3 border-t border-surface-border">
+                <label className="block text-xs font-semibold text-ink-secondary mb-2">Rolling Velocity Aggregation Window</label>
+                <div className="flex flex-wrap gap-1.5">
                   {['5m', '15m', '1h', '6h', '24h'].map((w) => (
                     <button
                       key={w}
                       onClick={() => setVelocityWindow(w)}
-                      className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
                         velocityWindow === w
-                          ? 'bg-neutral-900 text-white shadow-xs'
-                          : 'bg-neutral-50 text-neutral-600 border border-neutral-200/80 hover:bg-neutral-100'
+                          ? 'bg-brand-950 text-white shadow-xs font-semibold'
+                          : 'bg-surface-elevated text-ink-secondary border border-surface-border hover:bg-surface'
                       }`}
                     >
                       {w}
@@ -79,17 +79,17 @@ export const MonitoringPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-neutral-900">Concept Drift &amp; Feature Stability</h2>
-            <div className="space-y-3 pt-1 text-xs">
+          <div className="bg-surface border border-surface-border rounded-xl p-5 shadow-xs space-y-3">
+            <h2 className="text-xs font-bold text-ink uppercase tracking-wider">Concept Drift &amp; Feature Stability (PSI)</h2>
+            <div className="space-y-2 pt-1 text-xs">
               {[
-                { name: 'Velocity Dispersion Drift (PSI)', value: '0.042 (Stable)', color: 'text-emerald-600', dot: 'bg-emerald-500' },
-                { name: 'Circadian Entropy Shift', value: '0.018 (Stable)', color: 'text-emerald-600', dot: 'bg-emerald-500' },
-                { name: 'Counterparty Network Centrality', value: '0.089 (Minor drift)', color: 'text-amber-600', dot: 'bg-amber-400' },
+                { name: 'Velocity Dispersion Drift (PSI)', value: '0.042 (Stable)', color: 'text-emerald-700', dot: 'bg-emerald-500' },
+                { name: 'Circadian Entropy Shift (PSI)', value: '0.018 (Stable)', color: 'text-emerald-700', dot: 'bg-emerald-500' },
+                { name: 'Counterparty Network Centrality (PSI)', value: '0.089 (Minor drift)', color: 'text-amber-700', dot: 'bg-amber-400' },
               ].map((item) => (
-                <div key={item.name} className="flex justify-between items-center py-2 border-b border-neutral-50 last:border-0">
-                  <span className="text-neutral-600 font-medium">{item.name}</span>
-                  <span className={`font-bold flex items-center gap-1.5 ${item.color}`}>
+                <div key={item.name} className="flex justify-between items-center py-1.5 border-b border-surface-border last:border-0">
+                  <span className="text-ink-secondary font-medium">{item.name}</span>
+                  <span className={`font-mono font-bold flex items-center gap-1.5 ${item.color}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
                     {item.value}
                   </span>
@@ -100,34 +100,27 @@ export const MonitoringPage: React.FC = () => {
         </div>
 
         {/* Right 4 cols */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white border border-neutral-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="font-bold text-base text-neutral-900">Scoring Engine Metrics</h3>
-            <div className="space-y-3 text-xs pt-1">
-              <div className="flex justify-between items-center pb-2 border-b border-neutral-50">
-                <span className="text-neutral-500 font-medium">Throughput</span>
-                <span className="font-bold text-neutral-900">1,240 txn/sec</span>
+        <div className="lg:col-span-4 space-y-4">
+          <div className="bg-surface border border-surface-border rounded-xl p-4 shadow-xs space-y-3">
+            <h2 className="text-xs font-bold text-ink uppercase tracking-wider">Pipeline Performance</h2>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-surface-border">
+                <span className="text-ink-secondary">Real-Time Ingestion:</span>
+                <span className="font-mono font-bold text-emerald-700">1,240 tx/sec</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-neutral-50">
-                <span className="text-neutral-500 font-medium">Inference Latency (p99)</span>
-                <span className="font-bold text-emerald-600">18 ms</span>
+              <div className="flex justify-between items-center py-1 border-b border-surface-border">
+                <span className="text-ink-secondary">p99 Pipeline Latency:</span>
+                <span className="font-mono font-bold text-ink">18 ms</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-neutral-50">
-                <span className="text-neutral-500 font-medium">Auto-Triage Precision</span>
-                <span className="font-bold text-neutral-900">98.4%</span>
+              <div className="flex justify-between items-center py-1 border-b border-surface-border">
+                <span className="text-ink-secondary">Graph Engine Cycles:</span>
+                <span className="font-mono font-bold text-ink">100% Validated</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-neutral-500 font-medium">Temporal Leakage Check</span>
-                <span className="font-bold text-emerald-600">0 Violations</span>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-ink-secondary">Feature Lookahead Guard:</span>
+                <span className="font-mono font-bold text-emerald-700">Active (0 Leakage)</span>
               </div>
             </div>
-          </div>
-
-          <div className="bg-[#f0f5ff] border border-blue-100 rounded-3xl p-6 text-xs text-neutral-700 space-y-2">
-            <h4 className="font-bold text-neutral-900 text-sm">Automated Recalibration</h4>
-            <p className="text-neutral-600 leading-relaxed">
-              When feature drift PSI exceeds 0.20, Sentinel automatically flags the scoring pipeline for model retuning without impacting live transaction ingress.
-            </p>
           </div>
         </div>
       </div>
