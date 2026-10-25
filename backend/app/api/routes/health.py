@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter
 
 router = APIRouter(tags=["Health"])
@@ -14,5 +14,5 @@ def get_health():
         "status": "ok",
         "service": "sentinel-core",
         "version": "0.1.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

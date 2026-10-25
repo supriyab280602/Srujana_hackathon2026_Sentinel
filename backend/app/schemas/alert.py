@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -22,13 +22,15 @@ class AlertRead(BaseModel):
     detection_rule: str = Field(..., description="Primary rule or model detector that triggered the alert")
     title: str = Field(..., description="Brief alert headline")
     summary: str = Field(..., description="Detailed contextual narrative of the suspicious pattern")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Alert generation timestamp")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), description="Alert generation timestamp"
+    )
     factors: List[RiskFactor] = Field(default_factory=list, description="Explainable feature breakdown")
     model_config = ConfigDict(from_attributes=True)
 
 
 class AlertFilter(BaseModel):
-    severity: Optional[str] = None
+    severity: Optional[Literal["low", "medium", "high", "critical"]] = None
     account_id: Optional[str] = None
-    status: Optional[str] = None
-    min_score: Optional[float] = None
+    status: Optional[Literal["open", "under_review", "escalated", "dismissed", "resolved"]] = None
+    min_score: Optional[float] = Field(None, ge=0.0, le=100.0)

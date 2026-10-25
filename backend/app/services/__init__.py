@@ -1,6 +1,7 @@
 from app.services.alert_service import alert_service, AlertService
 from app.services.graph_service import graph_service, GraphService
 from app.services.scoring_service import scoring_service, ScoringService
+from app.services.transaction_service import transaction_service, TransactionService
 
 __all__ = [
     "alert_service",
@@ -9,4 +10,6 @@ __all__ = [
     "GraphService",
     "scoring_service",
     "ScoringService",
+    "transaction_service",
+    "TransactionService",
 ]

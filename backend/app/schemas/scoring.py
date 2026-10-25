@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 from app.schemas.transaction import TransactionCreate
 from app.schemas.alert import RiskFactor
@@ -21,8 +21,12 @@ class ScoreResponse(BaseModel):
         default="heuristic_baseline_v0",
         description="Version/identifier of scoring pipeline (e.g., heuristic, ensemble, gnn)"
     )
+    model_version: Optional[str] = Field(None, description="Version tag of active fraud estimator model")
+    is_placeholder: Optional[bool] = Field(None, description="True if inference used untrained scaffold weights")
     is_alert_triggered: bool = Field(..., description="Whether score exceeds alert trigger threshold")
-    suggested_severity: str = Field(..., description="Recommended alert severity tier")
+    suggested_severity: Literal["low", "medium", "high", "critical"] = Field(
+        ..., description="Recommended alert severity tier"
+    )
     factors: List[RiskFactor] = Field(default_factory=list, description="Top contributing explainable factors")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Model certainty score")
     scored_at: str = Field(..., description="ISO timestamp of scoring event")

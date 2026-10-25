@@ -17,10 +17,18 @@ class Settings(BaseModel):
         "http://127.0.0.1:3000",
     ])
 
-    # Future persistence settings (Supabase / Postgres)
+    # Supabase settings (Auth & future persistence)
     DATABASE_URL: str | None = Field(default_factory=lambda: os.getenv("DATABASE_URL"))
     SUPABASE_URL: str | None = Field(default_factory=lambda: os.getenv("SUPABASE_URL"))
     SUPABASE_KEY: str | None = Field(default_factory=lambda: os.getenv("SUPABASE_KEY"))
+
+    @property
+    def normalized_supabase_url(self) -> str | None:
+        """Return SUPABASE_URL with trailing slashes stripped, or None if unconfigured."""
+        if not self.SUPABASE_URL:
+            return None
+        stripped = self.SUPABASE_URL.strip().rstrip("/")
+        return stripped if stripped else None
 
 
 settings = Settings()

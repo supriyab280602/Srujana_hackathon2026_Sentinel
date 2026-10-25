@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -20,6 +20,12 @@ class NetworkEdge(BaseModel):
     timestamp: str = Field(..., description="Transfer time")
     suspicious: bool = Field(default=False, description="Whether flagged as an anomalous hop")
     hopIndex: Optional[int] = Field(None, description="Distance from root account")
+    step_index: Optional[int] = Field(
+        None, description="Chronological sequential order for graph replay stepping"
+    )
+    channel: Optional[str] = Field(
+        default=None, description="Payment rail or channel (e.g. wire, ach, crypto)"
+    )
 
 
 class AccountNetworkResponse(BaseModel):
@@ -28,3 +34,9 @@ class AccountNetworkResponse(BaseModel):
     edges: List[NetworkEdge] = Field(default_factory=list, description="All flow edges between nodes")
     max_hops: int = Field(default=3, description="Depth radius searched")
     total_volume: float = Field(default=0.0, description="Cumulative flow across graph")
+    detected_cycles: List[List[str]] = Field(
+        default_factory=list, description="Circular fund routing loops detected via NetworkX topology analysis"
+    )
+    metrics: Dict[str, Any] = Field(
+        default_factory=dict, description="Topological summary metrics (e.g. node_count, edge_count, suspicious_ratio)"
+    )
