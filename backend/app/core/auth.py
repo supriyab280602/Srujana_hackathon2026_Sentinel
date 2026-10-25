@@ -37,13 +37,13 @@ HTTP responses
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 
 import jwt
 from jwt import PyJWKClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.config import settings
 
@@ -64,10 +64,12 @@ _ALLOWED_ALGORITHM = "ES256"
 
 
 class VerifiedUser(BaseModel):
-    """Minimal identity extracted from a verified Supabase token."""
+    """Identity extracted from a verified Supabase token."""
 
     sub: str  # Supabase user UUID
     email: str | None = None  # present in most Supabase tokens, optional here
+    role: str | None = None  # standard Supabase role or app_metadata role
+    app_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -232,4 +234,14 @@ def verified_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return VerifiedUser(sub=sub, email=payload.get("email"))
+    app_metadata = payload.get("app_metadata")
+    safe_app_metadata = app_metadata if isinstance(app_metadata, dict) else {}
+    raw_role = safe_app_metadata.get("role") or payload.get("role")
+    role_str = raw_role if isinstance(raw_role, str) and raw_role.strip() else None
+
+    return VerifiedUser(
+        sub=sub,
+        email=payload.get("email"),
+        role=role_str,
+        app_metadata=safe_app_metadata,
+    )

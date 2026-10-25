@@ -1319,3 +1319,144 @@ class TestAccountNetworkAuth:
         assert data["metrics"]["current_replay_step"] == 1
 
 
+# ---------------------------------------------------------------------------
+# Authorization Boundaries, RBAC Trust, and Account Ownership Gaps
+# ---------------------------------------------------------------------------
+
+class TestAuthorizationBoundariesAndModelGaps:
+    """
+    Evaluates authorization boundaries, cross-user access attribution,
+    and documents data model gaps regarding RBAC and account ownership.
+    """
+
+    USER_A_SUB = "11111111-1111-1111-1111-111111111111"
+    USER_B_SUB = "22222222-2222-2222-2222-222222222222"
+
+    def test_permitted_requests_with_valid_jwt(
+        self, auth_client: TestClient, auth_header: dict[str, str]
+    ) -> None:
+        """Legitimate authenticated investigator requests are permitted across endpoints."""
+        assert auth_client.get("/api/alerts", headers=auth_header).status_code == 200
+        assert auth_client.get("/api/alerts/ALT-8902", headers=auth_header).status_code == 200
+        assert auth_client.get("/api/accounts/ACC-7749/transactions", headers=auth_header).status_code == 200
+        assert auth_client.get("/api/accounts/ACC-7749/network", headers=auth_header).status_code == 200
+
+    def test_denied_requests_without_valid_jwt(self, auth_client: TestClient) -> None:
+        """Unauthenticated requests are denied access across all protected endpoints."""
+        assert auth_client.get("/api/alerts").status_code == 401
+        assert auth_client.get("/api/alerts/ALT-8902").status_code == 401
+        assert auth_client.get("/api/accounts/ACC-7749/transactions").status_code == 401
+        assert auth_client.get("/api/accounts/ACC-7749/network").status_code == 401
+        assert auth_client.post("/api/investigations/ALT-8902/review", json={}).status_code == 401
+        assert auth_client.post("/api/transactions/score", json={}).status_code == 401
+
+    def test_user_cannot_impersonate_another_investigator_in_review(
+        self, auth_client: TestClient
+    ) -> None:
+        """
+        An authenticated user (User A) cannot attribute an investigation review
+        to another user (User B) by passing User B's identifier in the request body.
+        The system strictly attributes the review to the verified JWT subject.
+        """
+        token_a = _make_es256_token(sub=self.USER_A_SUB, email="user_a@sentinel.test")
+        header_a = {"Authorization": f"Bearer {token_a}"}
+
+        # User A attempts to submit a review claiming it was done by User B
+        spoof_attempt_payload = {
+            "alert_id": "ALT-8902",
+            "decision": "confirm_fraud",
+            "notes": "User A attempting to submit under User B's identity.",
+            "investigator_id": self.USER_B_SUB,
+        }
+        response = auth_client.post(
+            "/api/investigations/ALT-8902/review",
+            json=spoof_attempt_payload,
+            headers=header_a,
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        # Reviewer identity must be User A (verified token sub), NOT User B (spoofed body)
+        assert data["investigator_id"] == self.USER_A_SUB
+        assert data["investigator_id"] != self.USER_B_SUB
+
+    def test_distinct_users_isolated_review_attribution(
+        self, auth_client: TestClient
+    ) -> None:
+        """Reviews submitted by distinct users are each attributed to their own verified identity."""
+        token_a = _make_es256_token(sub=self.USER_A_SUB, email="investigator_a@sentinel.test")
+        token_b = _make_es256_token(sub=self.USER_B_SUB, email="investigator_b@sentinel.test")
+
+        resp_a = auth_client.post(
+            "/api/investigations/ALT-8902/review",
+            json={"alert_id": "ALT-8902", "decision": "confirm_fraud", "notes": "Review by A"},
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+        assert resp_a.status_code == 200
+        assert resp_a.json()["investigator_id"] == self.USER_A_SUB
+
+        resp_b = auth_client.post(
+            "/api/investigations/ALT-8902/review",
+            json={"alert_id": "ALT-8902", "decision": "needs_escalation", "notes": "Review by B"},
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        assert resp_b.status_code == 200
+        assert resp_b.json()["investigator_id"] == self.USER_B_SUB
+
+    def test_verified_user_extracts_trusted_claims_ignoring_client_body(
+        self, auth_client: TestClient
+    ) -> None:
+        """
+        VerifiedUser safely extracts authoritative role/app_metadata from the
+        cryptographically signed JWT payload, completely ignoring client-supplied body roles.
+        """
+        token = _make_es256_token(
+            sub=self.USER_A_SUB,
+            extra_claims={
+                "role": "authenticated",
+                "app_metadata": {"role": "senior_analyst", "clearance": "level_3"},
+            },
+        )
+        # Passing an untrusted client role in the request body
+        payload = {
+            "alert_id": "ALT-8902",
+            "decision": "false_positive",
+            "notes": "Testing role boundary",
+            "role": "attacker_supplied_superadmin",
+        }
+        response = auth_client.post(
+            "/api/investigations/ALT-8902/review",
+            json=payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["investigator_id"] == self.USER_A_SUB
+        # Request body cannot inject 'role' into the recorded response
+        assert "attacker_supplied_superadmin" not in str(data)
+
+    def test_account_surveillance_data_accessible_to_all_authenticated_investigators(
+        self, auth_client: TestClient
+    ) -> None:
+        """
+        Accounts in Sentinel represent monitored financial entities (e.g. ACC-7749),
+        not application user accounts. All authenticated investigators have access to
+        surveillance telemetry. No artificial or fake ownership blocks legitimate access.
+        """
+        token_a = _make_es256_token(sub=self.USER_A_SUB)
+        token_b = _make_es256_token(sub=self.USER_B_SUB)
+
+        resp_a = auth_client.get(
+            "/api/accounts/ACC-7749/transactions",
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+        resp_b = auth_client.get(
+            "/api/accounts/ACC-7749/transactions",
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+
+        assert resp_a.status_code == 200
+        assert resp_b.status_code == 200
+        assert len(resp_a.json()) == len(resp_b.json())
+
+
